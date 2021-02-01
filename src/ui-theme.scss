@@ -1,0 +1,43 @@
+$feature-flags: (
+    enable-css-custom-properties: true,
+    ui-shell: false,
+    grid-columns-16: false
+);
+
+$css--font-face: false;
+$css--helpers: true;
+$css--body: true;
+$css--use-layer: true;
+$css--reset: true;
+$css--default-type: true;
+$css--plex: true;
+
+// Use all Carbon themes
+@import "carbon-components/scss/globals/scss/vendor/@carbon/themes/scss";
+
+:root { @include carbon--theme($carbon--theme--white, true); }
+:root[theme="g10"] { @include carbon--theme($carbon--theme--g10, true); }
+:root[theme="g90"] { @include carbon--theme($carbon--theme--g90, true); }
+:root[theme="g100"] { @include carbon--theme($carbon--theme--g100, true); }
+
+@import "carbon-components/scss/globals/scss/_css--reset.scss";
+@import "carbon-components/scss/globals/scss/_css--font-face.scss";
+@import "carbon-components/scss/globals/scss/_css--helpers.scss";
+@import "carbon-components/scss/globals/scss/_css--body.scss";
+@import "carbon-components/scss/globals/grid/_grid.scss";
+@import "carbon-components/scss/globals/scss/styles.scss";
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+	display: grid;
+	grid-template-areas: "aside tabs" "aside editor";
+	grid-template-rows: 40px 1fr;
+	grid-template-columns: 320px 1fr;
+
+	gap: var(--cds-spacing-04);
+	padding: var(--cds-spacing-04);
+}

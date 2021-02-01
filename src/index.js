@@ -1,13 +1,7 @@
-import App from './App.svelte';
-
-const { readFileSync } = require('fs');
-const foo = readFileSync('package.json');
+import App from './components/App.svelte';
 
 const app = new App({
-	target: document.body,
-	props: {
-		foo,
-	}
+    target: document.body,
 });
 
 export default app;
