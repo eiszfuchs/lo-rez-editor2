@@ -1,4 +1,4 @@
-import { readable } from 'svelte/store';
+import { readable, writable } from 'svelte/store';
 
 let initialized = false;
 const versionsUrl =
@@ -18,3 +18,5 @@ export const minecraftVersions = readable([], (set) => {
 
     return () => {};
 });
+
+export const selectedVersion = writable(null);

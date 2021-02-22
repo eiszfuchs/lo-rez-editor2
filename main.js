@@ -9,10 +9,10 @@ function createWindow() {
     const win = new BrowserWindow({
         center: true,
 
-        width: 800,
-        minWidth: 770,
-        height: 520,
-        minHeight: 520,
+        width: 960,
+        minWidth: 900,
+        height: 540,
+        minHeight: 500,
 
         useContentSize: true,
         autoHideMenuBar: true,

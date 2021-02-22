@@ -6,7 +6,8 @@
 
     import { InlineNotification } from 'carbon-components-svelte';
     import { Button } from 'carbon-components-svelte';
-    import { Loading } from 'carbon-components-svelte';
+    import { InlineLoading } from 'carbon-components-svelte';
+    import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
 
     let pending = false;
 
@@ -22,8 +23,10 @@
     }
 </script>
 
+<SidebarLabel>lo-rez version</SidebarLabel>
+
 {#if $lorezVersion}
-    <p>Version of lo-rez: <code>{$lorezVersion}</code></p>
+    <p>Revision: <code>{$lorezVersion}</code></p>
 {:else}
     <InlineNotification
         title="lo-rez has not been cloned."
@@ -39,20 +42,17 @@
         <div class="clone-action">
             <p>Clone lo-rez automatically?</p>
 
-            <Button
-                size="small"
-                kind="primary"
-                disabled={pending}
-                on:click={onCloneClick}
-            >
-                Clone
-            </Button>
-
             {#if pending}
-                <!-- TODO: https://carbon-svelte.vercel.app/components/InlineLoading -->
-                <div class="clone-loader">
-                    <Loading withOverlay={false} small />
-                </div>
+                <InlineLoading description="Cloning&hellip;" />
+            {:else}
+                <Button
+                    size="small"
+                    kind="primary"
+                    disabled={pending}
+                    on:click={onCloneClick}
+                >
+                    Clone
+                </Button>
             {/if}
         </div>
     {/if}
@@ -60,6 +60,8 @@
 
 <style lang="scss">
     p {
+        white-space: nowrap;
+
         font-size: var(--cds-label-01-font-size);
         font-weight: var(--cds-label-01-font-weight);
         line-height: var(--cds-label-01-line-height);
@@ -68,11 +70,7 @@
 
     .clone-action {
         display: flex;
-        align-items: baseline;
-        gap: var(--cds-spacing-04);
-    }
-
-    .clone-loader {
-        align-self: center;
+        align-items: center;
+        gap: var(--cds-spacing-03);
     }
 </style>

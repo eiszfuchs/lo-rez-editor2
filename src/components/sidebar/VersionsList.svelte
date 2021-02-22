@@ -1,9 +1,12 @@
 <script>
-    import { minecraftVersions } from '@/stores/mc-versions.js';
+    import {
+        minecraftVersions,
+        selectedVersion,
+    } from '@/stores/mc-versions.js';
     import { Select, SelectItem } from 'carbon-components-svelte';
+    import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
 
-    const { writeFileSync, mkdirSync } = require('fs');
-    const path = require('path');
+    const { writeFileSync, mkdirSync, existsSync } = require('fs');
     const axios = require('axios').default;
 
     let selected;
@@ -14,6 +17,14 @@
     $: loadVersion(selected);
 
     function fetchVersion(url, version) {
+        const targetFilename = `versions/${version}.jar`;
+
+        if (existsSync(targetFilename)) {
+            $selectedVersion = version;
+
+            return Promise.resolve();
+        }
+
         pending = true;
         progress = 0;
 
@@ -21,6 +32,8 @@
 
         axios
             .get(url, {
+                // This is important:
+                responseType: 'arraybuffer',
                 onDownloadProgress: ({ loaded, total }) => {
                     progress = loaded / total;
                 },
@@ -28,16 +41,21 @@
             .then(({ data }) => {
                 progress = 1;
 
-                writeFileSync(`versions/${version}.jar`, data, {
+                // Buffer.from is also important
+                // (don't waste your time like I did)
+                writeFileSync(targetFilename, Buffer.from(data), {
                     encoding: 'binary',
                 });
             })
             .finally(() => {
                 pending = false;
+                $selectedVersion = version;
             });
     }
 
     function loadVersion(version) {
+        $selectedVersion = null;
+
         if (!version) {
             return;
         }
@@ -46,15 +64,17 @@
 
         axios
             .get(url)
-            .then(({ data }) => data)
-            .then(({ downloads }) => downloads)
-            .then(({ client }) => client)
+            .then(({ data }) => data?.downloads?.client)
             .then(({ url }) => fetchVersion(url, version));
     }
 </script>
 
-<Select labelText="Master version" disabled={pending} bind:selected>
+<SidebarLabel>Minecraft version</SidebarLabel>
+
+<!-- TODO: <Dropdown> looks nicer, maybe try this later? -->
+<Select hideLabel size="sm" disabled={pending} bind:selected>
     <SelectItem text="Please select" />
+
     {#each $minecraftVersions as version}
         <SelectItem value={version.id} text={version.id} />
     {/each}
