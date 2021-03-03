@@ -1,5 +1,6 @@
 <script>
     import { selectedVersion } from '@/stores/mc-versions.js';
+    import { openEditor } from '@/stores/editors.js';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
 
@@ -16,6 +17,7 @@
                 ) !== null,
             label: ({ entryName }) =>
                 entryName.replace(/^assets\/minecraft\/textures\//, ''),
+            open: ({ label, entryName }) => openEditor({ label, entryName }),
         },
     ];
 
@@ -31,8 +33,15 @@
                 .map((entry) => {
                     for (const capability of capabilities) {
                         if (capability.test(entry)) {
+                            const label = capability.label(entry);
+
                             return {
-                                label: capability.label(entry),
+                                label,
+                                onClick: () =>
+                                    capability.open({
+                                        label,
+                                        ...entry,
+                                    }),
                             };
                         }
                     }
@@ -57,7 +66,7 @@
     <!-- This is the actual list -->
     <ul class="assets">
         {#each zipEntries as entry}
-            <li class="entry">{entry.label}</li>
+            <li class="entry" on:click={entry.onClick}>{entry.label}</li>
         {/each}
     </ul>
 </div>
@@ -80,5 +89,11 @@
         font-weight: var(--cds-label-01-font-weight);
         line-height: var(--cds-label-01-line-height);
         letter-spacing: var(--cds-label-01-letter-spacing);
+
+        cursor: pointer;
+
+        &:hover {
+            color: var(--cds-text-04);
+        }
     }
 </style>
