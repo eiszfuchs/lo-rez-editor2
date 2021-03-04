@@ -7,6 +7,7 @@
     "build": "npm run build:theme && npm run build:gui",
     "build:gui": "rollup -c",
     "build:theme": "node scripts/build-ui.js",
+    "watch:gui": "rollup -c -w",
     "start": "electron main.js"
   },
   "dependencies": {
@@ -19,7 +20,7 @@
     "carbon-components": "^10.29.0",
     "carbon-components-svelte": "^0.29.2",
     "electron": "^12.0.0",
-    "postcss": "^8.2.6",
+    "postcss": "^8.2.7",
     "prettier": "^2.2.1",
     "prettier-plugin-svelte": "^2.2.0",
     "rollup": "^2.40.0",

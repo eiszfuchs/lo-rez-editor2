@@ -3,6 +3,9 @@
         minecraftVersions,
         selectedVersion,
     } from '@/stores/mc-versions.js';
+
+    import { editors } from '@/stores/editors.js';
+
     import { Select, SelectItem } from 'carbon-components-svelte';
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
 
@@ -14,6 +17,7 @@
     let pending = false;
     let progress = 1;
 
+    $: hasOpenEditors = $editors.length > 0;
     $: loadVersion(selected);
 
     function fetchVersion(url, version) {
@@ -72,7 +76,7 @@
 <SidebarLabel>Minecraft version</SidebarLabel>
 
 <!-- TODO: <Dropdown> looks nicer, maybe try this later? -->
-<Select hideLabel size="sm" disabled={pending} bind:selected>
+<Select hideLabel size="sm" disabled={pending || hasOpenEditors} bind:selected>
     <SelectItem text="Please select" />
 
     {#each $minecraftVersions as version}

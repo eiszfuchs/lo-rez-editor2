@@ -3,6 +3,7 @@
     import { openEditor } from '@/stores/editors.js';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
+    import TextureEditor from '@/components/editors/Texture.svelte';
 
     const AdmZip = require('adm-zip');
     const sortCollator = new Intl.Collator();
@@ -17,7 +18,12 @@
                 ) !== null,
             label: ({ entryName }) =>
                 entryName.replace(/^assets\/minecraft\/textures\//, ''),
-            open: ({ label, entryName }) => openEditor({ label, entryName }),
+            open: ({ label, zipEntry }) =>
+                openEditor({
+                    ui: TextureEditor,
+                    label,
+                    zipEntry,
+                }),
         },
     ];
 
@@ -40,7 +46,7 @@
                                 onClick: () =>
                                     capability.open({
                                         label,
-                                        ...entry,
+                                        zipEntry: entry,
                                     }),
                             };
                         }

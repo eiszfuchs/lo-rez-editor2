@@ -26,6 +26,8 @@
         flex-direction: row;
         flex-wrap: wrap; // Makes items not wrap but shrink properly????
         gap: var(--cds-spacing-02);
+
+        padding-right: var(--cds-spacing-06);
     }
 
     .tab {
@@ -35,7 +37,12 @@
         padding: var(--cds-spacing-03);
         background-color: var(--cds-field-01);
 
+        cursor: pointer;
         overflow: hidden;
+
+        &:hover {
+            background-color: var(--cds-hover-field);
+        }
 
         &.active {
             background-color: var(--cds-field-02);
