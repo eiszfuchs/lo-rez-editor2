@@ -1,19 +1,30 @@
 <script>
-    import { editors, activeEditor } from '@/stores/editors.js';
+    import { editors, activeEditor, closeEditor } from '@/stores/editors.js';
+
+    import { Button } from 'carbon-components-svelte';
+    import CloseOutline16 from 'carbon-icons-svelte/lib/CloseOutline16';
 
     function activate(editor) {
         $activeEditor = editor;
+    }
+
+    function close(editor) {
+        closeEditor(editor);
     }
 </script>
 
 <nav>
     {#each $editors as editor}
-        <div
-            class="tab"
-            class:active={editor === $activeEditor}
-            on:click={activate(editor)}
-        >
-            <span>{editor.label}</span>
+        <div class="tab" class:active={editor === $activeEditor}>
+            <span on:click={() => activate(editor)}>{editor.label}</span>
+
+            <Button
+                size="small"
+                kind="ghost"
+                iconDescription="Close tab"
+                icon={CloseOutline16}
+                on:click={() => close(editor)}
+            />
         </div>
     {/each}
 </nav>
@@ -34,15 +45,15 @@
         flex: 1 1 1%;
         min-width: 1px;
 
-        padding: var(--cds-spacing-03);
+        display: flex;
+        flex-direction: row;
+        align-content: space-between;
+        align-items: stretch;
+
         background-color: var(--cds-field-01);
 
         cursor: pointer;
         overflow: hidden;
-
-        &:hover {
-            background-color: var(--cds-hover-field);
-        }
 
         &.active {
             background-color: var(--cds-field-02);
@@ -50,11 +61,19 @@
     }
 
     .tab span {
+        flex: 1 1 auto;
+
         display: block;
         max-width: 100%;
+        padding-top: var(--cds-spacing-03);
+        padding-left: var(--cds-spacing-04);
 
         overflow: hidden;
         text-overflow: ellipsis;
         line-height: 1.2;
+
+        &:hover {
+            background-color: var(--cds-hover-field);
+        }
     }
 </style>

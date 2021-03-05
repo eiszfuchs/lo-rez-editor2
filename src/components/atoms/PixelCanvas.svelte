@@ -6,9 +6,10 @@
 
     $: height = texture?.length || 0;
     $: width = texture[0]?.length || 0;
+    $: colors = [...(palette?.colors || [])];
 
     function at(x, y) {
-        return palette[texture[y][x]];
+        return colors[texture[y][x]] || null;
     }
 
     function put(pageX, pageY) {
@@ -19,7 +20,7 @@
 
         if (canvasY >= 0 && canvasY < height) {
             if (canvasX >= 0 && canvasX < width) {
-                texture[canvasY][canvasX] = 1;
+                texture[canvasY][canvasX] = palette.index;
                 texture = texture;
             }
         }
@@ -48,7 +49,12 @@
     {#each Array(height) as _, y}
         <div class="row">
             {#each Array(width) as _, x}
-                <div data-x={x} data-y={y} style="background: {at(x, y, texture)}" />
+                <div
+                    data-x={x}
+                    data-y={y}
+                    class:null={at(x, y, texture) === null}
+                    style="background-color: {at(x, y, texture)}"
+                />
             {/each}
         </div>
     {/each}
@@ -58,6 +64,8 @@
     .pixel-canvas {
         display: flex;
         flex-direction: column;
+
+        background-image: var(--tex-transparent-background);
     }
 
     .row {
@@ -69,8 +77,15 @@
         width: 24px;
         height: 24px;
 
+        &.null {
+            opacity: 0.75;
+
+            background-attachment: fixed;
+            background-image: var(--tex-null-background);
+        }
+
         &:hover {
-            box-shadow: inset 0 0 0 1px var(--cds-hover-light-ui);
+            box-shadow: inset 0 0 0 2px var(--cds-hover-light-ui);
         }
     }
 </style>
