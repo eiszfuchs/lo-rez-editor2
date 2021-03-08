@@ -3,8 +3,15 @@
     import Pen16 from 'carbon-icons-svelte/lib/Pen16';
     import Eyedropper16 from 'carbon-icons-svelte/lib/Eyedropper16';
     import TextFill16 from 'carbon-icons-svelte/lib/TextFill16';
+    import Shuffle16 from 'carbon-icons-svelte/lib/Shuffle16';
 
-    import Canvas from '../atoms/PixelCanvas.svelte';
+    import Canvas, {
+        TOOL_PEN,
+        TOOL_FILL,
+        TOOL_PICK,
+        TOOL_SWAP,
+    } from '../atoms/PixelCanvas.svelte';
+
     import PalettePicker from '../atoms/PalettePicker.svelte';
     import CompareSwitcher from '../atoms/CompareSwitcher.svelte';
     import ComparePanel from '../atoms/ComparePanel.svelte';
@@ -17,6 +24,7 @@
     let texturePalette = null;
     let texture = [];
     let texturePicker;
+    let textureTool = TOOL_PEN;
 
     const dataUriPrefix = 'data:image/png;base64,';
 
@@ -29,8 +37,13 @@
 
         texture = Array(height / 2)
             .fill(null)
-            .map((y) => Array(width / 2).fill(null));
+            .map(() => Array(width / 2).fill(null));
     });
+
+    const posFromEvent = (event) => [
+        Math.floor(event.offsetX / 12),
+        Math.floor(event.offsetY / 12),
+    ];
 
     let highlightPalette = [];
 
@@ -39,10 +52,16 @@
     }
 
     function overOriginal(event) {
-        const pixelX = Math.floor(event.offsetX / 12);
-        const pixelY = Math.floor(event.offsetY / 12);
+        const [pixelX, pixelY] = posFromEvent(event);
 
         highlightPalette = [texturePicker(pixelX, pixelY)];
+        event.preventDefault();
+    }
+
+    function clickOriginal(event) {
+        const [pixelX, pixelY] = posFromEvent(event);
+
+        texturePalette.setColor(texturePicker(pixelX, pixelY));
     }
 </script>
 
@@ -53,10 +72,11 @@
                 <ComparePanel label="Original">
                     <div class="texture-parent">
                         <img
-                            src={previewSrc}
                             alt=""
+                            src={previewSrc}
                             on:mousemove={overOriginal}
                             on:mouseleave={leaveOriginal}
+                            on:click={clickOriginal}
                         />
                     </div>
                 </ComparePanel>
@@ -68,7 +88,11 @@
                 <ComparePanel label="Editor">
                     <div class="texture-parent">
                         <div>
-                            <Canvas {texture} palette={texturePalette} />
+                            <Canvas
+                                {texture}
+                                tool={textureTool}
+                                palette={texturePalette}
+                            />
                         </div>
                     </div>
                 </ComparePanel>
@@ -84,7 +108,8 @@
         <div class="tools">
             <div class="tool-group">
                 <Button
-                    kind="secondary"
+                    kind={textureTool === TOOL_PEN ? 'secondary' : 'ghost'}
+                    on:click={() => (textureTool = TOOL_PEN)}
                     size="small"
                     iconDescription="Pen"
                     icon={Pen16}
@@ -92,20 +117,31 @@
                 />
 
                 <Button
-                    kind="ghost"
+                    kind={textureTool === TOOL_FILL ? 'secondary' : 'ghost'}
+                    on:click={() => (textureTool = TOOL_FILL)}
                     size="small"
-                    disabled
                     iconDescription="Fill"
                     icon={TextFill16}
                     tooltipPosition="left"
                 />
 
                 <Button
-                    kind="ghost"
+                    kind={textureTool === TOOL_PICK ? 'secondary' : 'ghost'}
+                    on:click={() => (textureTool = TOOL_PICK)}
                     size="small"
                     disabled
                     iconDescription="Pick"
                     icon={Eyedropper16}
+                    tooltipPosition="left"
+                />
+
+                <Button
+                    kind={textureTool === TOOL_SWAP ? 'secondary' : 'ghost'}
+                    on:click={() => (textureTool = TOOL_SWAP)}
+                    size="small"
+                    disabled
+                    iconDescription="Swap"
+                    icon={Shuffle16}
                     tooltipPosition="left"
                 />
             </div>

@@ -1,10 +1,25 @@
 <script>
+    import { onDestroy } from 'svelte';
+
     export let palette;
     export let highlight = [];
+    let unsubscribe = () => {};
+
+    function update() {
+        palette = palette;
+    }
 
     function activate(index) {
-        palette.index = index;
+        palette.setIndex(index);
     }
+
+    $: if (palette) {
+        unsubscribe = palette.subscribe(update);
+    }
+
+    onDestroy(() => {
+        unsubscribe();
+    });
 </script>
 
 {#if palette}
@@ -48,15 +63,13 @@
                 flex: 1 0 100%;
             }
 
-            &.active {
-                box-shadow: 0 0 0 2px var(--cds-ui-05);
-            }
-
             &.highlighted {
-                box-shadow: 0 0 0 2px var(--cds-highlight);
-
                 position: relative;
                 top: -2px;
+            }
+
+            &.active {
+                box-shadow: 0 0 0 2px var(--cds-ui-05);
             }
 
             &:hover {

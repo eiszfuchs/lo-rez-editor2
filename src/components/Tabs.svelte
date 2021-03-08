@@ -52,11 +52,12 @@
 
         background-color: var(--cds-field-01);
 
+        opacity: 0.5;
         cursor: pointer;
         overflow: hidden;
 
         &.active {
-            background-color: var(--cds-field-02);
+            opacity: 1;
         }
     }
 
