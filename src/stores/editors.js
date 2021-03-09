@@ -18,7 +18,6 @@ export const closeEditor = (editor) => {
     if (editorList.length > 0) {
         const newIndex = clamp(previousIndex, 0, editorList.length - 1);
 
-        console.log(previousIndex, newIndex);
         activeEditor.set(editorList[newIndex]);
     } else {
         activeEditor.set(null);

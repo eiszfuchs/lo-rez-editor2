@@ -3,7 +3,7 @@
 </script>
 
 <main>
-    {#each $editors as editor}
+    {#each $editors as editor (editor)}
         <svelte:component
             this={editor.ui}
             active={editor === $activeEditor}

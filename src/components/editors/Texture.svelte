@@ -4,19 +4,24 @@
     import Eyedropper16 from 'carbon-icons-svelte/lib/Eyedropper16';
     import TextFill16 from 'carbon-icons-svelte/lib/TextFill16';
     import Shuffle16 from 'carbon-icons-svelte/lib/Shuffle16';
+    import CenterCircle16 from 'carbon-icons-svelte/lib/CenterCircle16';
+    import Save16 from 'carbon-icons-svelte/lib/Save16';
 
     import Canvas, {
         TOOL_PEN,
         TOOL_FILL,
         TOOL_PICK,
         TOOL_SWAP,
+        TOOL_REPLACE,
     } from '../atoms/PixelCanvas.svelte';
 
     import PalettePicker from '../atoms/PalettePicker.svelte';
     import CompareSwitcher from '../atoms/CompareSwitcher.svelte';
     import ComparePanel from '../atoms/ComparePanel.svelte';
 
+    import { textures } from '@/stores/project.js';
     import { extract } from '../../modules/extractor';
+    import { empty, wrap } from '@/modules/texture.js';
 
     export let zipEntry;
     export let active = false;
@@ -31,14 +36,21 @@
     $: zipContent = zipEntry?.getData().toString('binary');
     $: previewSrc = dataUriPrefix + btoa(zipContent || '');
 
-    $: extract(previewSrc, ({ width, height, palette, getAt }) => {
-        texturePalette = palette;
-        texturePicker = getAt;
+    function init() {
+        extract(previewSrc, ({ width, height, palette, getAt }) => {
+            texturePalette = palette;
+            texturePicker = getAt;
 
-        texture = Array(height / 2)
-            .fill(null)
-            .map(() => Array(width / 2).fill(null));
-    });
+            if (textures.has(zipEntry.entryName)) {
+                texture = wrap(textures.get(zipEntry.entryName), width / 2);
+            } else {
+                texture = empty(width / 2, height / 2, palette.getDefault());
+            }
+        });
+    }
+
+    // Init like this to prevent re-load when another editor is opened
+    $: init(previewSrc);
 
     const posFromEvent = (event) => [
         Math.floor(event.offsetX / 12),
@@ -126,22 +138,31 @@
                 />
 
                 <Button
+                    disabled
                     kind={textureTool === TOOL_PICK ? 'secondary' : 'ghost'}
                     on:click={() => (textureTool = TOOL_PICK)}
                     size="small"
-                    disabled
                     iconDescription="Pick"
                     icon={Eyedropper16}
                     tooltipPosition="left"
                 />
 
                 <Button
+                    disabled
                     kind={textureTool === TOOL_SWAP ? 'secondary' : 'ghost'}
                     on:click={() => (textureTool = TOOL_SWAP)}
                     size="small"
-                    disabled
                     iconDescription="Swap"
                     icon={Shuffle16}
+                    tooltipPosition="left"
+                />
+
+                <Button
+                    kind={textureTool === TOOL_REPLACE ? 'secondary' : 'ghost'}
+                    on:click={() => (textureTool = TOOL_REPLACE)}
+                    size="small"
+                    iconDescription="Replace"
+                    icon={CenterCircle16}
                     tooltipPosition="left"
                 />
             </div>
@@ -151,6 +172,10 @@
     <div>
         <PalettePicker palette={texturePalette} highlight={highlightPalette} />
     </div>
+
+    <div class="actions">
+        <Button disabled kind="primary" size="field" icon={Save16}>Save</Button>
+    </div>
 </div>
 
 <style lang="scss">
@@ -158,6 +183,8 @@
         display: flex;
         flex-direction: column;
         gap: var(--cds-spacing-02);
+
+        min-height: 100%;
 
         &:not(.active) {
             display: none;
@@ -202,6 +229,8 @@
         background-color: var(--cds-field-01);
     }
 
-    .tool-group {
+    .actions {
+        margin-top: auto;
+        align-self: flex-end;
     }
 </style>

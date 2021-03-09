@@ -3,6 +3,7 @@
     export const TOOL_FILL = 'fill';
     export const TOOL_PICK = 'pick';
     export const TOOL_SWAP = 'swap';
+    export const TOOL_REPLACE = 'replace';
 </script>
 
 <script>
@@ -37,6 +38,10 @@
         }
     }
 
+    function penPut(container, canvasX, canvasY, value) {
+        container[canvasY][canvasX] = value;
+    }
+
     function fillPut(container, canvasX, canvasY, value) {
         const originValue = texture[canvasY][canvasX];
         const visited = new Set();
@@ -69,8 +74,16 @@
         visit(canvasX, canvasY);
     }
 
-    function penPut(container, canvasX, canvasY, value) {
-        container[canvasY][canvasX] = value;
+    function replacePut(container, canvasX, canvasY, value) {
+        const originValue = texture[canvasY][canvasX];
+
+        for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+                if (texture[y][x] === originValue) {
+                    container[y][x] = value;
+                }
+            }
+        }
     }
 
     function put(event) {
@@ -100,6 +113,8 @@
             conditionalPut = penPut;
         } else if (tool === TOOL_FILL) {
             conditionalPut = fillPut;
+        } else if (tool === TOOL_REPLACE) {
+            conditionalPut = replacePut;
         }
 
         if (isPressing) {

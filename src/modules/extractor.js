@@ -7,7 +7,7 @@ const convert = (data) =>
 
 export function extract(src, callback) {
     const source = document.createElement('img');
-    const colors = new Set();
+    const palette = new Palette();
 
     source.addEventListener('load', function () {
         const width = this.naturalWidth;
@@ -26,14 +26,14 @@ export function extract(src, callback) {
             for (let x = 0; x < height; x += 1) {
                 const pixel = context.getImageData(x, y, 1, 1);
 
-                colors.add(convert(pixel.data));
+                palette.addColor(convert(pixel.data));
             }
         }
 
         callback({
             width,
             height,
-            palette: new Palette(colors),
+            palette: palette.cleanup(),
             getAt: (x, y) => convert(context.getImageData(x, y, 1, 1).data),
         });
     });

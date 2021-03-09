@@ -2,7 +2,7 @@
 
 <style lang="scss">
     p {
-        opacity: 0.6;
+        color: var(--cds-text-02);
         margin-bottom: var(--cds-spacing-03);
 
         font-size: var(--cds-productive-heading-01-font-size);

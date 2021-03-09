@@ -1,6 +1,13 @@
 <script>
+    import { lt as semverLt } from 'semver';
+
     import { selectedVersion } from '@/stores/mc-versions.js';
     import { openEditor } from '@/stores/editors.js';
+    import { versions } from '@/stores/project.js';
+
+    import { TextInput, Icon } from 'carbon-components-svelte';
+    import WarningAltFilled16 from 'carbon-icons-svelte/lib/WarningAltFilled16';
+    import ArrowDown16 from 'carbon-icons-svelte/lib/ArrowDown16';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
     import TextureEditor from '@/components/editors/Texture.svelte';
@@ -9,6 +16,7 @@
     const sortCollator = new Intl.Collator();
 
     let zipEntries = [];
+    let filterSearch = '';
 
     const capabilities = [
         {
@@ -27,6 +35,18 @@
         },
     ];
 
+    function normalize(version) {
+        const normalizedVersion = version.split('.');
+
+        normalizedVersion[2] = normalizedVersion[2] || '0';
+
+        return normalizedVersion.join('.');
+    }
+
+    function outdated(filename) {
+        return semverLt(versions.get(filename), normalize($selectedVersion));
+    }
+
     $: {
         zipEntries = [];
 
@@ -43,6 +63,7 @@
 
                             return {
                                 label,
+                                filename: entry.entryName,
                                 onClick: () =>
                                     capability.open({
                                         label,
@@ -72,9 +93,33 @@
     <!-- This is the actual list -->
     <ul class="assets">
         {#each zipEntries as entry}
-            <li class="entry" on:click={entry.onClick}>{entry.label}</li>
+            <li
+                class="entry"
+                class:hidden={!entry.label.includes(filterSearch)}
+                on:click={entry.onClick}
+            >
+                <span>{entry.label}</span>
+
+                {#if !versions.has(entry.filename)}
+                    <Icon render={WarningAltFilled16} />
+                {:else if outdated(entry.filename)}
+                    <Icon render={ArrowDown16} />
+                {/if}
+            </li>
         {/each}
     </ul>
+
+    <div class="form">
+        <TextInput
+            inline
+            light
+            size="sm"
+            labelText="Search"
+            placeholder="Filter by name..."
+            disabled={!$selectedVersion}
+            bind:value={filterSearch}
+        />
+    </div>
 </div>
 
 <style lang="scss">
@@ -88,18 +133,55 @@
         flex: 1 1 auto;
         overflow: hidden auto;
         min-height: 1px;
+
+        &::-webkit-scrollbar {
+            width: var(--cds-spacing-03);
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--cds-field-02);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--cds-ui-04);
+        }
+    }
+
+    .form {
+        flex: 0 1 auto;
+        margin-top: var(--cds-spacing-03);
     }
 
     .entry {
-        font-size: var(--cds-label-01-font-size);
-        font-weight: var(--cds-label-01-font-weight);
-        line-height: var(--cds-label-01-line-height);
-        letter-spacing: var(--cds-label-01-letter-spacing);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
 
         cursor: pointer;
 
+        color: var(--cds-text-05);
+        margin: var(--cds-spacing-01) var(--cds-spacing-02)
+            var(--cds-spacing-01) 0;
+
         &:hover {
             color: var(--cds-text-04);
+        }
+
+        &.hidden {
+            display: none;
+        }
+
+        > span {
+            flex: 1 1 auto;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            font-size: var(--cds-label-01-font-size);
+            font-weight: var(--cds-label-01-font-weight);
+            line-height: var(--cds-label-01-line-height);
+            letter-spacing: var(--cds-label-01-letter-spacing);
         }
     }
 </style>

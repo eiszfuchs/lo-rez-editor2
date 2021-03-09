@@ -76,7 +76,13 @@
 <SidebarLabel>Minecraft version</SidebarLabel>
 
 <!-- TODO: <Dropdown> looks nicer, maybe try this later? -->
-<Select hideLabel size="sm" disabled={pending || hasOpenEditors} bind:selected>
+<Select
+    light
+    hideLabel
+    size="sm"
+    disabled={pending || hasOpenEditors}
+    bind:selected
+>
     <SelectItem text="Please select" />
 
     {#each $minecraftVersions as version}
