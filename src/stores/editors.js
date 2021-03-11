@@ -6,8 +6,16 @@ export const editors = writable([]);
 export const activeEditor = writable(null);
 
 export const openEditor = (editor) => {
-    editors.update((l) => [...l, editor]);
-    activeEditor.set(editor);
+    const alreadyOpen = get(editors).find(
+        ({ zipEntry }) => zipEntry === editor.zipEntry
+    );
+
+    if (!alreadyOpen) {
+        editors.update((l) => [...l, editor]);
+        activeEditor.set(editor);
+    } else {
+        activeEditor.set(alreadyOpen);
+    }
 };
 
 export const closeEditor = (editor) => {
