@@ -1,13 +1,13 @@
 <script>
-    import { lt as semverLt } from 'semver';
-
     import { selectedVersion } from '@/stores/mc-versions.js';
     import { openEditor } from '@/stores/editors.js';
     import { versions } from '@/stores/project.js';
+    import { lt } from '@/modules/version.js';
 
     import { TextInput, Icon } from 'carbon-components-svelte';
     import WarningAltFilled16 from 'carbon-icons-svelte/lib/WarningAltFilled16';
     import ArrowDown16 from 'carbon-icons-svelte/lib/ArrowDown16';
+    import ArrowUp16 from 'carbon-icons-svelte/lib/ArrowUp16';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
     import TextureEditor from '@/components/editors/Texture.svelte';
@@ -35,16 +35,12 @@
         },
     ];
 
-    function normalize(version) {
-        const normalizedVersion = version.split('.');
-
-        normalizedVersion[2] = normalizedVersion[2] || '0';
-
-        return normalizedVersion.join('.');
+    function outdated(filename) {
+        return lt(versions.get(filename), $selectedVersion);
     }
 
-    function outdated(filename) {
-        return semverLt(versions.get(filename), normalize($selectedVersion));
+    function fromFuture(filename) {
+        return lt($selectedVersion, versions.get(filename));
     }
 
     $: {
@@ -104,6 +100,8 @@
                     <Icon render={WarningAltFilled16} />
                 {:else if outdated(entry.filename)}
                     <Icon render={ArrowDown16} />
+                {:else if fromFuture(entry.filename)}
+                    <Icon render={ArrowUp16} />
                 {/if}
             </li>
         {/each}

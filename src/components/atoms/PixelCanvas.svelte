@@ -4,14 +4,23 @@
     export const TOOL_PICK = 'pick';
     export const TOOL_SWAP = 'swap';
     export const TOOL_REPLACE = 'replace';
+    export const TOOL_MOVE = 'move';
 </script>
 
 <script>
+    import { createEventDispatcher } from 'svelte';
+    import { empty } from '@/modules/texture.js';
+    import { VectorSet2D } from '@/struct/vector2d-set.js';
+    import { Vector2D } from '@/struct/vector2d.js';
+
     export let texture;
     export let palette;
     export let tool = TOOL_PEN;
 
+    const dispatch = createEventDispatcher();
+
     let moveParent;
+    let actionCollection = new VectorSet2D();
     let isPressing = false;
 
     $: height = texture?.length || 0;
@@ -86,14 +95,64 @@
         }
     }
 
+    function movePut(container, vectors) {
+        const size = vectors.length;
+
+        if (size < 2) {
+            return;
+        }
+
+        const first = vectors[0];
+        const last = vectors[size - 1];
+        const diffX = last.x - first.x;
+        const diffY = last.y - first.y;
+        const temp = empty(width, height, null);
+
+        for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+                const moveX = (x - diffX + width) % width;
+                const moveY = (y - diffY + height) % height;
+
+                temp[y][x] = texture[moveY][moveX];
+            }
+        }
+
+        for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+                container[y][x] = temp[y][x];
+            }
+        }
+    }
+
+    function commit(container, index, vectorSet) {
+        const vectors = vectorSet.toArray();
+
+        if (tool === TOOL_PEN) {
+            vectors.forEach((vector) =>
+                penPut(container, vector.x, vector.y, index)
+            );
+        } else if (tool === TOOL_FILL) {
+            vectors.forEach((vector) =>
+                fillPut(container, vector.x, vector.y, index)
+            );
+        } else if (tool === TOOL_REPLACE) {
+            vectors.forEach((vector) =>
+                replacePut(container, vector.x, vector.y, index)
+            );
+        } else if (tool === TOOL_MOVE) {
+            movePut(container, vectors);
+        }
+    }
+
     function put(event) {
         event.preventDefault();
 
         const { pageX, pageY } = event;
-        const { top, left } = moveParent.getBoundingClientRect();
+        const { left, top } = moveParent.getBoundingClientRect();
 
         const canvasX = Math.floor((pageX - left) / 24);
         const canvasY = Math.floor((pageY - top) / 24);
+        const point = new Vector2D(canvasX, canvasY);
 
         clear(preview);
         preview = preview;
@@ -107,27 +166,25 @@
             return;
         }
 
-        let conditionalPut = () => {};
+        actionCollection.add(point);
 
-        if (tool === TOOL_PEN) {
-            conditionalPut = penPut;
-        } else if (tool === TOOL_FILL) {
-            conditionalPut = fillPut;
-        } else if (tool === TOOL_REPLACE) {
-            conditionalPut = replacePut;
-        }
+        commit(preview, palette.index, actionCollection);
+        preview = preview;
 
-        if (isPressing) {
-            conditionalPut(texture, canvasX, canvasY, palette.index);
-            texture = texture;
-        } else {
-            conditionalPut(preview, canvasX, canvasY, palette.index);
-            preview = preview;
+        if (tool === TOOL_MOVE) {
+            const first = actionCollection.toArray()[0];
+
+            actionCollection.clear();
+            actionCollection.add(first).add(point);
         }
     }
 
     function onMove(event) {
         put(event);
+
+        if (!isPressing) {
+            actionCollection.clear();
+        }
     }
 
     function onLeave() {
@@ -138,6 +195,13 @@
     function onRelease() {
         isPressing = false;
         document.removeEventListener('mouseup', onRelease);
+
+        commit(texture, palette.index, actionCollection);
+        texture = texture;
+
+        actionCollection.clear();
+
+        dispatch('change');
     }
 
     function onPress(event) {

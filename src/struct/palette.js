@@ -8,6 +8,10 @@ export function Palette(colors = []) {
     return this;
 }
 
+Palette.prototype.toArray = function () {
+    return [...this.colors];
+};
+
 Palette.prototype.subscribe = function (callback) {
     this.subscriptions.add(callback);
 
@@ -26,7 +30,7 @@ Palette.prototype.notify = function () {
 
 Palette.prototype.cleanup = function () {
     // TODO: A certain amount of colors might be too much, cleanup in this case
-    console.debug(this.colors.size);
+    console.debug('TODO: Palette cleanup? size =', this.colors.size);
 
     return this.notify();
 };
@@ -47,7 +51,7 @@ Palette.prototype.setColor = function (color) {
         throw new Error(`Color ${color} is not in palette`);
     }
 
-    this.index = [...this.colors].indexOf(color);
+    this.index = this.toArray().indexOf(color);
 
     return this.notify();
 };
@@ -68,13 +72,13 @@ Palette.prototype.getDefault = function () {
 
     for (let color of this.colors) {
         if (color.endsWith('00')) {
-            return [...this.colors].indexOf(color);
+            return this.toArray().indexOf(color);
         }
 
         const weight = this.colorWeights[color];
 
         if (weight > maxWeight) {
-            defaultIndex = [...this.colors].indexOf(color);
+            defaultIndex = this.toArray().indexOf(color);
             maxWeight = weight;
         }
     }

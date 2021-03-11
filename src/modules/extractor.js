@@ -1,11 +1,14 @@
 import { Palette } from '../struct/palette';
 
-const convert = (data) =>
+const toColor = (data) =>
     `#${Array.from(data)
         .map((d) => d.toString(16).padStart(2, '0'))
-        .join('')}`;
+        .join('')}`.toLowerCase();
 
-export function extract(src, callback) {
+const fromColor = (color) =>
+    color.match(/#(.{2})(.{2})(.{2})(.{2})/).map((d) => parseInt(d, 16));
+
+export const extract = (src, callback) => {
     const source = document.createElement('img');
     const palette = new Palette();
 
@@ -26,7 +29,7 @@ export function extract(src, callback) {
             for (let x = 0; x < height; x += 1) {
                 const pixel = context.getImageData(x, y, 1, 1);
 
-                palette.addColor(convert(pixel.data));
+                palette.addColor(toColor(pixel.data));
             }
         }
 
@@ -34,9 +37,31 @@ export function extract(src, callback) {
             width,
             height,
             palette: palette.cleanup(),
-            getAt: (x, y) => convert(context.getImageData(x, y, 1, 1).data),
+            getAt: (x, y) => toColor(context.getImageData(x, y, 1, 1).data),
         });
     });
 
     source.src = src;
-}
+};
+
+export const paint = (texture, palette) => {
+    const height = texture?.length || 0;
+    const width = texture[0]?.length || 0;
+    const colors = [...(palette?.colors || [])];
+
+    const canvas = document.createElement('canvas');
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext('2d');
+
+    for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < height; x += 1) {
+            context.fillStyle = colors[texture[y][x]];
+            context.fillRect(x, y, 1, 1);
+        }
+    }
+
+    return canvas.toDataURL('image/png', 9);
+};

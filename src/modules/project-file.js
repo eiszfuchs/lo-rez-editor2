@@ -42,3 +42,26 @@ ProjectFile.prototype.read = function () {
 
     return this;
 };
+
+ProjectFile.prototype.set = function (name, value) {
+    this.data[name] = value;
+
+    return this.write();
+};
+
+ProjectFile.prototype.write = function () {
+    const buffer = Object.keys(this.data)
+        .sort()
+        .map((name) =>
+            JSON.stringify({
+                name,
+                value: this.data[name],
+            })
+        )
+        .join(JSONL_SEPARATOR);
+
+    // Write with trailing new line
+    writeFileSync(this.filename, `${buffer}\n`, { encoding: 'utf-8' });
+
+    return this;
+};
