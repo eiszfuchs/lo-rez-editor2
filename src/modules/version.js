@@ -12,3 +12,18 @@ export const lt = (vA, vB) => {
 
     return majorA < majorB || minorA < minorB;
 };
+
+export const compare = (vA, vB) => {
+    const [majorA, minorA, bugfixA = 0] = normalize(vA);
+    const [majorB, minorB, bugfixB = 0] = normalize(vB);
+
+    if (majorA !== majorB) {
+        return majorB - majorA;
+    }
+
+    if (minorA !== minorB) {
+        return minorB - minorA;
+    }
+
+    return bugfixB - bugfixA;
+};

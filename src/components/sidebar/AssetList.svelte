@@ -1,5 +1,5 @@
 <script>
-    import { selectedVersion } from '@/stores/mc-versions.js';
+    import { cachedVersions, selectedVersion } from '@/stores/mc-versions.js';
     import { openEditor } from '@/stores/editors.js';
     import { versions } from '@/stores/project.js';
     import { lt } from '@/modules/version.js';
@@ -12,7 +12,6 @@
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
     import TextureEditor from '@/components/editors/Texture.svelte';
 
-    const AdmZip = require('adm-zip');
     const sortCollator = new Intl.Collator();
 
     let zipEntries = [];
@@ -20,10 +19,33 @@
 
     const capabilities = [
         {
-            test: ({ entryName }) =>
-                entryName.match(
-                    /^assets\/minecraft\/textures\/(block|item)/
-                ) !== null,
+            test: ({ entryName: name }) => {
+                if (!name.endsWith('.png')) {
+                    return false;
+                }
+
+                if (name.includes('fire_0') || name.includes('fire_1')) {
+                    return false;
+                }
+
+                if (name.includes('/lava_')) {
+                    return false;
+                }
+
+                if (name.includes('clock_')) {
+                    return false;
+                }
+
+                if (name.includes('compass_')) {
+                    return false;
+                }
+
+                return (
+                    name.match(
+                        /^assets\/minecraft\/textures\/(block|item)s?\//
+                    ) !== null
+                );
+            },
             label: ({ entryName }) =>
                 entryName.replace(/^assets\/minecraft\/textures\//, ''),
             open: ({ label, zipEntry }) =>
@@ -47,8 +69,7 @@
         zipEntries = [];
 
         if ($selectedVersion) {
-            const targetFilename = `versions/${$selectedVersion}.jar`;
-            const zip = new AdmZip(targetFilename);
+            const { zip } = cachedVersions[$selectedVersion];
 
             zipEntries = zip
                 .getEntries()

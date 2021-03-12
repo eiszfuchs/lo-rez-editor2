@@ -21,16 +21,23 @@
     import CompareSwitcher from '../atoms/CompareSwitcher.svelte';
     import ComparePanel from '../atoms/ComparePanel.svelte';
 
-    import { selectedVersion } from '@/stores/mc-versions.js';
+    import {
+        cachedVersions,
+        downloadedVersions,
+        selectedVersion,
+    } from '@/stores/mc-versions.js';
+
     import { palettes, textures, versions } from '@/stores/project.js';
     import { extract, paint } from '@/modules/extractor.js';
     import { flatten, empty, wrap } from '@/modules/texture.js';
+    import { checkAsset } from '@/modules/issues.js';
     import { lt } from '@/modules/version.js';
 
     export let zipEntry;
     export let active = false;
 
     let issues = [];
+    let changes = {};
     let issueModalOpen = false;
 
     let texturePalette = null;
@@ -40,67 +47,83 @@
 
     const dataUriPrefix = 'data:image/png;base64,';
 
-    $: zipContent = zipEntry?.getData().toString('binary');
-    $: previewSrc = dataUriPrefix + btoa(zipContent || '');
+    const dataToUri = (data) =>
+        !data ? null : dataUriPrefix + btoa(data.toString('binary') || '');
+
+    $: entryName = zipEntry?.entryName;
+    $: previewSrc = dataToUri(zipEntry?.getData());
     $: loPreviewSrc = paint(texture, texturePalette);
 
     function init() {
-        issues = [];
+        changes = {};
 
         extract(previewSrc, ({ width, height, palette, getAt }) => {
             texturePalette = palette;
             texturePicker = getAt;
 
-            const savedFlatTexture = textures.get(zipEntry.entryName);
-            const savedPalette = palettes.get(zipEntry.entryName);
+            const savedFlatTexture = textures.get(entryName);
 
             if (savedFlatTexture) {
-                console.debug(
-                    'Check version:',
-                    versions.get(zipEntry.entryName),
-                    '>=',
-                    $selectedVersion
-                );
-
-                console.debug(
-                    'Check palette:',
-                    Math.max(...savedFlatTexture),
-                    '<',
-                    palette.colors.size
-                );
-
-                if (lt(versions.get(zipEntry.entryName), $selectedVersion)) {
-                    issues.push(
-                        'This texture was sampled using an older Minecraft version.'
-                    );
-                }
-
-                if (Math.max(...savedFlatTexture) >= palette.colors.size) {
-                    issues.push(
-                        'The saved version of this texture uses more colors than the palette provides.'
-                    );
-                }
-
-                if (!savedPalette) {
-                    issues.push(
-                        'Issues cannot be recovered automatically as this texture was saved in an older version of lo-rez-editor.'
-                    );
-                } else if (
-                    savedPalette.join(':') !==
-                    texturePalette.toArray().join(':')
-                ) {
-                    issues.push(
-                        'The color palette has changed since this texture was saved.'
-                    );
-                }
-
+                issues = checkAsset($selectedVersion, entryName, palette);
                 issueModalOpen = issues.length > 0;
+
                 texture = wrap(savedFlatTexture, width / 2);
             } else {
                 texture = empty(width / 2, height / 2, palette.getDefault());
             }
 
             issues = issues;
+        });
+
+        setTimeout(() => {
+            const versionCount = $downloadedVersions.length;
+            const selectedIndex = $downloadedVersions.indexOf($selectedVersion);
+            let lastData;
+
+            const findin = (version, filename) => {
+                const { zip } = cachedVersions[version];
+
+                // Forders were named `blocks` and `items` before 1.13
+                if (lt(version, '1.13')) {
+                    filename = filename
+                        .replace('/item/', '/items/')
+                        .replace('/block/', '/blocks/');
+                } else {
+                    filename = filename
+                        .replace('/items/', '/item/')
+                        .replace('/blocks/', '/block/');
+                }
+
+                return dataToUri(zip.getEntry(filename)?.getData());
+            };
+
+            lastData = previewSrc;
+            for (let i = selectedIndex - 1; i >= 0; i -= 1) {
+                const newerVersion = $downloadedVersions[i];
+                const newerData = findin(newerVersion, entryName);
+
+                if (newerData === null) {
+                    break;
+                }
+
+                if (newerData !== lastData) {
+                    lastData = changes[newerVersion] = newerData;
+                }
+            }
+
+            lastData = previewSrc;
+            for (let i = selectedIndex + 1; i < versionCount; i += 1) {
+                const olderVersion = $downloadedVersions[i];
+                const olderData = findin(olderVersion, entryName);
+
+                if (olderData === null) {
+                    break;
+                }
+
+                if (olderData !== lastData) {
+                    lastData = changes[olderVersion] = olderData;
+                }
+            }
         });
     }
 
@@ -132,11 +155,9 @@
     }
 
     function onSave() {
-        const name = zipEntry.entryName;
-
-        versions.set(name, $selectedVersion);
-        palettes.set(name, texturePalette.toArray());
-        textures.set(name, flatten(texture));
+        versions.set(entryName, $selectedVersion);
+        palettes.set(entryName, texturePalette.toArray());
+        textures.set(entryName, flatten(texture));
     }
 </script>
 
@@ -144,7 +165,7 @@
     <div class="layout-box">
         <div>
             <CompareSwitcher>
-                <ComparePanel label="Original">
+                <ComparePanel label={$selectedVersion}>
                     <div class="texture-parent">
                         <img
                             alt=""
@@ -155,6 +176,14 @@
                         />
                     </div>
                 </ComparePanel>
+
+                {#each Object.entries(changes) as [version, data]}
+                    <ComparePanel label={version}>
+                        <div class="texture-parent">
+                            <img alt="" src={data} />
+                        </div>
+                    </ComparePanel>
+                {/each}
             </CompareSwitcher>
         </div>
 
@@ -253,7 +282,7 @@
     <div class="layout-box texture-previews">
         <div>
             <CompareSwitcher>
-                <ComparePanel label="Original">
+                <ComparePanel label={$selectedVersion}>
                     <div class="texture-preview-parent">
                         <div
                             class="texture-preview"
@@ -261,6 +290,17 @@
                         />
                     </div>
                 </ComparePanel>
+
+                {#each Object.entries(changes) as [version, data]}
+                    <ComparePanel label={version}>
+                        <div class="texture-preview-parent">
+                            <div
+                                class="texture-preview"
+                                style="background-image: url({data});"
+                            />
+                        </div>
+                    </ComparePanel>
+                {/each}
             </CompareSwitcher>
         </div>
 

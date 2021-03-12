@@ -1,15 +1,52 @@
 <script>
-    import { gitVersion } from '@/stores/git-version.js';
-    import { lorezVersion } from '@/stores/lorez-version.js';
-
-    import { cloneLorez } from '@/tools/clone-lorez.js';
-
     import { InlineNotification } from 'carbon-components-svelte';
     import { Button } from 'carbon-components-svelte';
     import { InlineLoading } from 'carbon-components-svelte';
+    import DrillDown16 from 'carbon-icons-svelte/lib/DrillDown16';
+
+    import { Palette } from '@/struct/palette.js';
+
+    import { gitVersion } from '@/stores/git-version.js';
+    import { lorezVersion } from '@/stores/lorez-version.js';
+    import { cachedVersions, selectedVersion } from '@/stores/mc-versions.js';
+
+    import { cloneLorez } from '@/tools/clone-lorez.js';
+
+    import { wrap } from '@/modules/texture.js';
+    import { load } from '@/modules/issues.js';
+    import { paint } from '@/modules/extractor.js';
+    import { lt } from '@/modules/version.js';
+
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
 
+    const { writeFileSync } = require('fs');
+
     let pending = false;
+
+    function onExportClick() {
+        const { zip } = cachedVersions[$selectedVersion];
+
+        zip.getEntries().forEach(({ entryName }) => {
+            try {
+                const [version, palette, texture] = load(entryName);
+
+                if (lt(version, $selectedVersion)) {
+                    return;
+                }
+
+                const exportFilename = `lo-rez/${entryName}`;
+                const texturePalette = new Palette(palette);
+                const wrappedTexture = wrap(texture, 8);
+                const painted = paint(wrappedTexture, texturePalette);
+                const cropped = painted.slice(painted.indexOf('base64,') + 7);
+                const buffer = atob(cropped);
+
+                console.debug(`Writing data to ${exportFilename}`);
+
+                writeFileSync(exportFilename, buffer, { encoding: 'binary' });
+            } catch (reason) {}
+        });
+    }
 
     function onCloneClick() {
         pending = true;
@@ -26,7 +63,19 @@
 <SidebarLabel>lo-rez version</SidebarLabel>
 
 {#if $lorezVersion}
-    <p>Revision: <code>{$lorezVersion}</code></p>
+    <div class="layout">
+        <p>Revision: <code>{$lorezVersion}</code></p>
+
+        <Button
+            size="small"
+            kind="tertiary"
+            icon={DrillDown16}
+            disabled={!$selectedVersion}
+            on:click={onExportClick}
+        >
+            Export
+        </Button>
+    </div>
 {:else}
     <InlineNotification
         title="lo-rez has not been cloned."
@@ -39,7 +88,7 @@
     />
 
     {#if $gitVersion}
-        <div class="clone-action">
+        <div class="layout">
             <p>Clone lo-rez automatically?</p>
 
             {#if pending}
@@ -68,9 +117,10 @@
         letter-spacing: var(--cds-label-01-letter-spacing);
     }
 
-    .clone-action {
+    .layout {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: var(--cds-spacing-03);
     }
 </style>

@@ -1,6 +1,7 @@
 <script>
     import {
         minecraftVersions,
+        downloadedVersions,
         selectedVersion,
     } from '@/stores/mc-versions.js';
 
@@ -25,6 +26,9 @@
 
         if (existsSync(targetFilename)) {
             $selectedVersion = version;
+            console.debug(
+                `Selected version already exists in ${targetFilename}`
+            );
 
             return Promise.resolve();
         }
@@ -33,6 +37,7 @@
         progress = 0;
 
         mkdirSync('versions', { recursive: true });
+        console.debug(`Loading selected version from ${url}`);
 
         axios
             .get(url, {
@@ -64,7 +69,11 @@
             return;
         }
 
+        // TODO: Don't make a request when the file already exists
+
         const { url } = $minecraftVersions.find(({ id }) => id === version);
+
+        console.debug(`Loading version information from ${url}`);
 
         axios
             .get(url)
@@ -86,7 +95,12 @@
     <SelectItem text="Please select" />
 
     {#each $minecraftVersions as version}
-        <SelectItem value={version.id} text={version.id} />
+        <SelectItem
+            value={version.id}
+            text="{version.id} {$downloadedVersions.includes(version.id)
+                ? '(✓ cached)'
+                : ''}"
+        />
     {/each}
 </Select>
 

@@ -63,5 +63,5 @@ export const paint = (texture, palette) => {
         }
     }
 
-    return canvas.toDataURL('image/png', 9);
+    return canvas.toDataURL('image/png', 1.0);
 };

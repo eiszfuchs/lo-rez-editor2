@@ -32,6 +32,8 @@ ProjectFile.prototype.read = function () {
         return this;
     }
 
+    console.debug(`Reading project file from ${this.filename}`);
+
     const buffer = readFileSync(this.filename, { encoding: 'utf-8' });
     const lines = String(buffer).split(JSONL_SEPARATOR);
 
@@ -50,6 +52,8 @@ ProjectFile.prototype.set = function (name, value) {
 };
 
 ProjectFile.prototype.write = function () {
+    console.debug(`Writing project file to ${this.filename}`);
+
     const buffer = Object.keys(this.data)
         .sort()
         .map((name) =>
