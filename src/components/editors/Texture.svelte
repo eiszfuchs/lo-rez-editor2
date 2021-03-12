@@ -6,6 +6,8 @@
     import Shuffle16 from 'carbon-icons-svelte/lib/Shuffle16';
     import CenterCircle16 from 'carbon-icons-svelte/lib/CenterCircle16';
     import Move16 from 'carbon-icons-svelte/lib/Move16';
+    import Paste16 from 'carbon-icons-svelte/lib/Paste16';
+    import Copy16 from 'carbon-icons-svelte/lib/Copy16';
     import Save16 from 'carbon-icons-svelte/lib/Save16';
 
     import Canvas, {
@@ -17,6 +19,7 @@
         TOOL_MOVE,
     } from '../atoms/PixelCanvas.svelte';
 
+    import Preview from '../atoms/PixelPreview.svelte';
     import PalettePicker from '../atoms/PalettePicker.svelte';
     import CompareSwitcher from '../atoms/CompareSwitcher.svelte';
     import ComparePanel from '../atoms/ComparePanel.svelte';
@@ -28,6 +31,8 @@
     } from '@/stores/mc-versions.js';
 
     import { palettes, textures, versions } from '@/stores/project.js';
+    import { textureClipboard } from '@/stores/clipboard.js';
+
     import { extract, paint } from '@/modules/extractor.js';
     import { flatten, empty, wrap } from '@/modules/texture.js';
     import { checkAsset } from '@/modules/issues.js';
@@ -39,6 +44,10 @@
     let issues = [];
     let changes = {};
     let issueModalOpen = false;
+
+    let pasteTexture = null;
+    let pasteColors = null;
+    let pasteModalOpen = false;
 
     let texturePalette = null;
     let texture = [];
@@ -152,6 +161,19 @@
         const [pixelX, pixelY] = posFromEvent(event);
 
         texturePalette.setColor(texturePicker(pixelX, pixelY));
+    }
+
+    function onCopy() {
+        $textureClipboard = {
+            texture: flatten(texture),
+            colors: texturePalette.toArray(),
+        };
+    }
+
+    function onPaste() {
+        pasteTexture = wrap($textureClipboard.texture, 8);
+        pasteColors = $textureClipboard.colors;
+        pasteModalOpen = true;
     }
 
     function onSave() {
@@ -319,9 +341,21 @@
     </div>
 
     <div class="actions">
-        <Button kind="primary" size="field" icon={Save16} on:click={onSave}>
-            Save
-        </Button>
+        <div class="action-group">
+            <Button kind="secondary" size="field" icon={Copy16} on:click={onCopy}>
+                Copy
+            </Button>
+
+            <Button kind="secondary" size="field" disabled={!$textureClipboard} icon={Paste16} on:click={onPaste}>
+                Paste
+            </Button>
+        </div>
+
+        <div class="action-group">
+            <Button kind="primary" size="field" icon={Save16} on:click={onSave}>
+                Save
+            </Button>
+        </div>
     </div>
 
     <Modal
@@ -337,6 +371,35 @@
         {#each issues as issue}
             <p class="issue">{issue}</p>
         {/each}
+    </Modal>
+
+    <Modal
+        preventCloseOnClickOutside
+        open={pasteModalOpen}
+        size="sm"
+        modalHeading="Paste clipboard"
+        primaryButtonText="Apply texture"
+        secondaryButtonText="Cancel"
+        primaryButtonDisabled
+        on:click:button--secondary={() => (pasteModalOpen = false)}
+    >
+        {#if pasteTexture}
+            <div class="layout-box">
+                <div class="texture-parent">
+                    <Preview colors={pasteColors} texture={pasteTexture} />
+                </div>
+
+                <div class="texture-parent">
+                    <Preview colors={texturePalette.toArray()} texture={pasteTexture} />
+                </div>
+            </div>
+
+            <div class="layout-box">
+                <p>What you copied:</p>
+
+                <p>What it looks like pasted:</p>
+            </div>
+        {/if}
     </Modal>
 </div>
 
@@ -361,6 +424,7 @@
     .layout-box {
         display: flex;
         flex-direction: row;
+        justify-content: space-between;
         gap: var(--cds-spacing-02);
 
         > * {
@@ -421,7 +485,10 @@
 
     .actions {
         margin-top: auto;
-        align-self: flex-end;
+
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
     }
 
     .issue {
