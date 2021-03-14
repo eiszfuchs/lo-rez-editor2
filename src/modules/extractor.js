@@ -26,7 +26,7 @@ export const extract = (src, callback) => {
         context.drawImage(this, 0, 0);
 
         for (let y = 0; y < height; y += 1) {
-            for (let x = 0; x < height; x += 1) {
+            for (let x = 0; x < width; x += 1) {
                 const pixel = context.getImageData(x, y, 1, 1);
 
                 palette.addColor(toColor(pixel.data));

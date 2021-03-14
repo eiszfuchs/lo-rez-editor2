@@ -1,7 +1,7 @@
 import { readable, writable } from 'svelte/store';
 import { compare, lt } from '@/modules/version.js';
 
-const { readdirSync } = require('fs');
+const { mkdirSync, readdirSync } = require('fs');
 const AdmZip = require('adm-zip');
 
 let remoteInitialized = false;
@@ -36,6 +36,9 @@ export const minecraftVersions = readable([], (set) => {
 export const downloadedVersions = readable([], (set) => {
     const update = () => {
         console.debug('Checking for cached versions');
+
+        // Create the folder if it does not exist
+        mkdirSync('versions', { recursive: true });
 
         // Doing this synchronously will initialize the Zip instance before
         // the asset list will be updated

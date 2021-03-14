@@ -226,7 +226,7 @@
 
                 <ComparePanel label="Exported">
                     <div class="texture-parent">
-                        <img src="../lo-rez/{zipEntry.entryName}" alt="" />
+                        <img src="../lo-rez/{entryName}" alt="" />
                     </div>
                 </ComparePanel>
             </CompareSwitcher>
@@ -336,17 +336,37 @@
                         />
                     </div>
                 </ComparePanel>
+
+                <ComparePanel label="Exported">
+                    <div class="texture-preview-parent">
+                        <div
+                            class="texture-preview"
+                            style="background-image: url(../lo-rez/{entryName});"
+                        />
+                    </div>
+                </ComparePanel>
             </CompareSwitcher>
         </div>
     </div>
 
     <div class="actions">
         <div class="action-group">
-            <Button kind="secondary" size="field" icon={Copy16} on:click={onCopy}>
+            <Button
+                kind="secondary"
+                size="field"
+                icon={Copy16}
+                on:click={onCopy}
+            >
                 Copy
             </Button>
 
-            <Button kind="secondary" size="field" disabled={!$textureClipboard} icon={Paste16} on:click={onPaste}>
+            <Button
+                kind="secondary"
+                size="field"
+                disabled={!$textureClipboard}
+                icon={Paste16}
+                on:click={onPaste}
+            >
                 Paste
             </Button>
         </div>
@@ -390,7 +410,10 @@
                 </div>
 
                 <div class="texture-parent">
-                    <Preview colors={texturePalette.toArray()} texture={pasteTexture} />
+                    <Preview
+                        colors={texturePalette.toArray()}
+                        texture={pasteTexture}
+                    />
                 </div>
             </div>
 
