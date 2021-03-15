@@ -4,7 +4,7 @@
     import { versions } from '@/stores/project.js';
     import { lt } from '@/modules/version.js';
 
-    import { TextInput, Icon } from 'carbon-components-svelte';
+    import { TextInput } from 'carbon-components-svelte';
     import WarningAltFilled16 from 'carbon-icons-svelte/lib/WarningAltFilled16';
     import ArrowDown16 from 'carbon-icons-svelte/lib/ArrowDown16';
     import ArrowUp16 from 'carbon-icons-svelte/lib/ArrowUp16';
@@ -118,11 +118,11 @@
                 <span>{entry.label}</span>
 
                 {#if !versions.has(entry.filename)}
-                    <Icon render={WarningAltFilled16} />
+                    <WarningAltFilled16 />
                 {:else if outdated(entry.filename)}
-                    <Icon render={ArrowDown16} />
+                    <ArrowDown16 />
                 {:else if fromFuture(entry.filename)}
-                    <Icon render={ArrowUp16} />
+                    <ArrowUp16 />
                 {/if}
             </li>
         {/each}
@@ -178,12 +178,12 @@
 
         cursor: pointer;
 
-        color: var(--cds-text-05);
+        color: var(--cds-interactive-02);
         margin: var(--cds-spacing-01) var(--cds-spacing-02)
             var(--cds-spacing-01) 0;
 
         &:hover {
-            color: var(--cds-text-04);
+            color: var(--cds-hover-secondary);
         }
 
         &.hidden {

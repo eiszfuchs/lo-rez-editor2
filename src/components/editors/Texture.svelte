@@ -1,3 +1,8 @@
+<script context="module">
+    export const PASTE_INDICES = 'indices';
+    export const PASTE_COLORS = 'colors';
+</script>
+
 <script>
     import { Button, Modal } from 'carbon-components-svelte';
     import Pen16 from 'carbon-icons-svelte/lib/Pen16';
@@ -45,9 +50,11 @@
     let changes = {};
     let issueModalOpen = false;
 
-    let pasteTexture = null;
+    let pasteRawTexture = null;
+    let pasteColorTexture = null;
     let pasteColors = null;
     let pasteModalOpen = false;
+    let pasteMode = null;
 
     let texturePalette = null;
     let texture = [];
@@ -62,6 +69,7 @@
     $: entryName = zipEntry?.entryName;
     $: previewSrc = dataToUri(zipEntry?.getData());
     $: loPreviewSrc = paint(texture, texturePalette);
+    $: epPreviewSrc = `../lo-rez/${entryName}`;
 
     function init() {
         changes = {};
@@ -171,9 +179,41 @@
     }
 
     function onPaste() {
-        pasteTexture = wrap($textureClipboard.texture, 8);
-        pasteColors = $textureClipboard.colors;
+        const { texture, colors } = $textureClipboard;
+        const availableColors = texturePalette.toArray();
+        const fallbackIndex = texturePalette.getDefault();
+
+        pasteRawTexture = wrap(texture, 8);
+        pasteColorTexture = wrap(
+            texture.map((index) => {
+                const mapped = availableColors.indexOf(colors[index]);
+
+                if (mapped >= 0) {
+                    return mapped;
+                }
+
+                return fallbackIndex;
+            }),
+            8
+        );
+
+        pasteColors = colors;
+
         pasteModalOpen = true;
+        pasteMode = null;
+    }
+
+    function onPasteApply() {
+        if (pasteMode === PASTE_INDICES) {
+            texture = pasteRawTexture;
+        }
+
+        if (pasteMode === PASTE_COLORS) {
+            texture = pasteColorTexture;
+        }
+
+        pasteModalOpen = false;
+        pasteMode = null;
     }
 
     function onSave() {
@@ -226,7 +266,8 @@
 
                 <ComparePanel label="Exported">
                     <div class="texture-parent">
-                        <img src="../lo-rez/{entryName}" alt="" />
+                        <!-- TODO: Pick matching colors from here -->
+                        <img src={epPreviewSrc} alt="" />
                     </div>
                 </ComparePanel>
             </CompareSwitcher>
@@ -235,7 +276,8 @@
         <div class="tools">
             <div class="tool-group">
                 <Button
-                    kind={textureTool === TOOL_PEN ? 'secondary' : 'ghost'}
+                    kind="ghost"
+                    isSelected={textureTool === TOOL_PEN}
                     on:click={() => (textureTool = TOOL_PEN)}
                     size="small"
                     iconDescription="Pen"
@@ -245,7 +287,8 @@
 
                 <Button
                     disabled
-                    kind={textureTool === TOOL_PICK ? 'secondary' : 'ghost'}
+                    kind="ghost"
+                    isSelected={textureTool === TOOL_PICK}
                     on:click={() => (textureTool = TOOL_PICK)}
                     size="small"
                     iconDescription="Pick"
@@ -254,7 +297,8 @@
                 />
 
                 <Button
-                    kind={textureTool === TOOL_FILL ? 'secondary' : 'ghost'}
+                    kind="ghost"
+                    isSelected={textureTool === TOOL_FILL}
                     on:click={() => (textureTool = TOOL_FILL)}
                     size="small"
                     iconDescription="Fill"
@@ -266,7 +310,8 @@
             <div class="tool-group">
                 <Button
                     disabled
-                    kind={textureTool === TOOL_SWAP ? 'secondary' : 'ghost'}
+                    kind="ghost"
+                    isSelected={textureTool === TOOL_SWAP}
                     on:click={() => (textureTool = TOOL_SWAP)}
                     size="small"
                     iconDescription="Swap"
@@ -275,7 +320,8 @@
                 />
 
                 <Button
-                    kind={textureTool === TOOL_REPLACE ? 'secondary' : 'ghost'}
+                    kind="ghost"
+                    isSelected={textureTool === TOOL_REPLACE}
                     on:click={() => (textureTool = TOOL_REPLACE)}
                     size="small"
                     iconDescription="Replace"
@@ -286,7 +332,8 @@
 
             <div class="tool-group">
                 <Button
-                    kind={textureTool === TOOL_MOVE ? 'secondary' : 'ghost'}
+                    kind="ghost"
+                    isSelected={textureTool === TOOL_MOVE}
                     on:click={() => (textureTool = TOOL_MOVE)}
                     size="small"
                     iconDescription="Move"
@@ -341,7 +388,7 @@
                     <div class="texture-preview-parent">
                         <div
                             class="texture-preview"
-                            style="background-image: url(../lo-rez/{entryName});"
+                            style="background-image: url({epPreviewSrc});"
                         />
                     </div>
                 </ComparePanel>
@@ -380,7 +427,7 @@
 
     <Modal
         preventCloseOnClickOutside
-        open={issueModalOpen}
+        bind:open={issueModalOpen}
         size="sm"
         modalHeading="Fix issues with texture"
         primaryButtonText="Apply changes"
@@ -395,34 +442,75 @@
 
     <Modal
         preventCloseOnClickOutside
-        open={pasteModalOpen}
+        bind:open={pasteModalOpen}
         size="sm"
         modalHeading="Paste clipboard"
         primaryButtonText="Apply texture"
         secondaryButtonText="Cancel"
-        primaryButtonDisabled
+        hasScrollingContent
+        primaryButtonDisabled={pasteMode === null}
+        on:submit={onPasteApply}
         on:click:button--secondary={() => (pasteModalOpen = false)}
     >
-        {#if pasteTexture}
-            <div class="layout-box">
-                <div class="texture-parent">
-                    <Preview colors={pasteColors} texture={pasteTexture} />
-                </div>
+        <table>
+            <tr>
+                {#if pasteColors && pasteRawTexture}
+                    <th>Clipboard</th>
+                {/if}
 
-                <div class="texture-parent">
-                    <Preview
-                        colors={texturePalette.toArray()}
-                        texture={pasteTexture}
-                    />
-                </div>
-            </div>
+                {#if pasteRawTexture}
+                    <th>Paste indices</th>
+                {/if}
 
-            <div class="layout-box">
-                <p>What you copied:</p>
+                {#if pasteColorTexture}
+                    <th>Paste colors</th>
+                {/if}
+            </tr>
 
-                <p>What it looks like pasted:</p>
-            </div>
-        {/if}
+            <tr>
+                {#if pasteColors && pasteRawTexture}
+                    <td>
+                        <div class="button-padding">
+                            <Preview
+                                size={16}
+                                colors={pasteColors}
+                                texture={pasteRawTexture}
+                            />
+                        </div>
+                    </td>
+                {/if}
+
+                {#if pasteRawTexture}
+                    <td class:selected={pasteMode === PASTE_INDICES}>
+                        <Button
+                            kind="ghost"
+                            on:click={() => (pasteMode = PASTE_INDICES)}
+                        >
+                            <Preview
+                                size={16}
+                                colors={texturePalette.toArray()}
+                                texture={pasteRawTexture}
+                            />
+                        </Button>
+                    </td>
+                {/if}
+
+                {#if pasteColorTexture}
+                    <td class:selected={pasteMode === PASTE_COLORS}>
+                        <Button
+                            kind="ghost"
+                            on:click={() => (pasteMode = PASTE_COLORS)}
+                        >
+                            <Preview
+                                size={16}
+                                colors={texturePalette.toArray()}
+                                texture={pasteColorTexture}
+                            />
+                        </Button>
+                    </td>
+                {/if}
+            </tr>
+        </table>
     </Modal>
 </div>
 
@@ -444,6 +532,37 @@
         background-image: var(--tex-transparent-background);
     }
 
+    // What, a table? In 2021?
+    table {
+        // width: 100%;
+        table-layout: fixed;
+
+        th {
+            text-align: left;
+
+            color: var(--cds-text-02);
+            padding-bottom: var(--cds-spacing-03);
+
+            font-size: var(--cds-productive-heading-01-font-size);
+            font-weight: normal;
+            line-height: var(--cds-productive-heading-01-line-height);
+            letter-spacing: var(--cds-productive-heading-01-letter-spacing);
+        }
+
+        td {
+            vertical-align: top;
+
+            &.selected {
+                background-color: var(--cds-field-02);
+            }
+        }
+    }
+
+    // This is not ideal, button paddings might change
+    .button-padding {
+        padding: calc(0.875rem - 3px) 16px;
+    }
+
     .layout-box {
         display: flex;
         flex-direction: row;
@@ -462,6 +581,7 @@
 
     .texture-parent {
         display: flex;
+        align-items: flex-start;
 
         padding: var(--cds-spacing-03);
 

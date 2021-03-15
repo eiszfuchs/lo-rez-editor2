@@ -1,6 +1,7 @@
 <script>
     export let texture;
     export let colors;
+    export let size = 24;
 
     $: height = texture?.length || 0;
     $: width = texture[0]?.length || 0;
@@ -10,13 +11,13 @@
     }
 </script>
 
-<div class="preview">
+<div class="preview" style="--size: {size}px;">
     {#each Array(height) as _, y}
         <div class="row">
             {#each Array(width) as _, x}
                 <div
                     class="pixel"
-                    style="background-color: {textureAt(x, y, texture)}"
+                    style="background-color: {textureAt(x, y, texture)};"
                 />
             {/each}
         </div>
@@ -25,7 +26,7 @@
 
 <style lang="scss">
     .preview {
-        display: flex;
+        display: inline-flex;
         flex-direction: column;
 
         background-image: var(--tex-transparent-background);
@@ -39,7 +40,7 @@
     .pixel {
         position: relative;
 
-        width: 24px;
-        height: 24px;
+        width: var(--size);
+        height: var(--size);
     }
 </style>
