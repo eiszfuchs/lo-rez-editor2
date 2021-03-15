@@ -10,6 +10,7 @@
     import ArrowUp16 from 'carbon-icons-svelte/lib/ArrowUp16';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
+    import ProgressBar from '@/components/atoms/ProgressBar.svelte';
     import TextureEditor from '@/components/editors/Texture.svelte';
 
     const sortCollator = new Intl.Collator();
@@ -65,37 +66,52 @@
         return lt($selectedVersion, versions.get(filename));
     }
 
-    $: {
+    function makeList() {
         zipEntries = [];
 
-        if ($selectedVersion) {
-            const { zip } = cachedVersions[$selectedVersion];
-
-            zipEntries = zip
-                .getEntries()
-                .map((entry) => {
-                    for (const capability of capabilities) {
-                        if (capability.test(entry)) {
-                            const label = capability.label(entry);
-
-                            return {
-                                label,
-                                filename: entry.entryName,
-                                onClick: () =>
-                                    capability.open({
-                                        label,
-                                        zipEntry: entry,
-                                    }),
-                            };
-                        }
-                    }
-
-                    return null;
-                })
-                .filter((e) => e !== null)
-                .sort((a, b) => sortCollator.compare(a.label, b.label));
+        if (!$selectedVersion) {
+            return;
         }
+
+        const { zip } = cachedVersions[$selectedVersion];
+
+        zipEntries = zip
+            .getEntries()
+            .map((entry) => {
+                for (const capability of capabilities) {
+                    if (capability.test(entry)) {
+                        const label = capability.label(entry);
+                        const filename = entry.entryName;
+
+                        const warnings = [
+                            !versions.has(filename) ? 'version' : null,
+                            outdated(filename) ? 'outdated' : null,
+                            fromFuture(filename) ? 'fromFuture' : null,
+                        ].filter((d) => d !== null);
+
+                        return {
+                            label,
+                            warnings,
+                            filename,
+                            onClick: () =>
+                                capability.open({
+                                    label,
+                                    zipEntry: entry,
+                                }),
+                        };
+                    }
+                }
+
+                return null;
+            })
+            .filter((e) => e !== null)
+            .sort((a, b) => sortCollator.compare(a.label, b.label));
     }
+
+    $: makeList($selectedVersion);
+    $: completedEntries = zipEntries.filter(
+        ({ warnings }) => warnings.length === 0
+    ).length;
 </script>
 
 <div class="layout">
@@ -127,6 +143,10 @@
             </li>
         {/each}
     </ul>
+
+    <div class="motivation">
+        <ProgressBar value={completedEntries} max={zipEntries.length} />
+    </div>
 
     <div class="form">
         <TextInput
@@ -166,9 +186,14 @@
         }
     }
 
+    .motivation {
+        flex: 0 1 auto;
+        margin-top: var(--cds-spacing-02);
+    }
+
     .form {
         flex: 0 1 auto;
-        margin-top: var(--cds-spacing-03);
+        margin-top: var(--cds-spacing-02);
     }
 
     .entry {

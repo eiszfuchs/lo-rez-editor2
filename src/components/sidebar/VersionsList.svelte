@@ -9,6 +9,7 @@
 
     import { Select, SelectItem } from 'carbon-components-svelte';
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
+    import ProgressBar from '@/components/atoms/ProgressBar.svelte';
 
     const { writeFileSync, mkdirSync, existsSync } = require('fs');
     const axios = require('axios').default;
@@ -105,30 +106,13 @@
 </Select>
 
 {#if pending}
-    <div class="progress">
-        <b class="progress__bar" style="width: {progress * 100}%;" />
-    </div>
+    <div class="spacer" />
+
+    <ProgressBar value={progress} max={1} />
 {/if}
 
 <style lang="scss">
-    .progress {
-        margin-top: var(--cds-spacing-01);
-        margin-bottom: var(--cds-spacing-01);
-
-        display: block;
-        width: 100%;
-        height: 2px;
-        position: relative;
-
-        background-color: var(--cds-ui-03);
-
-        &__bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-
-            background-color: var(--cds-interactive-04);
-        }
+    .spacer {
+        height: var(--cds-spacing-02);
     }
 </style>

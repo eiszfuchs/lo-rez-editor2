@@ -60,11 +60,13 @@
     }
 </script>
 
-<SidebarLabel>lo-rez version</SidebarLabel>
-
 {#if $lorezVersion}
     <div class="layout">
-        <p>Revision: <code>{$lorezVersion}</code></p>
+        <div>
+            <SidebarLabel>lo-rez version</SidebarLabel>
+
+            <p>Revision: <code>{$lorezVersion}</code></p>
+        </div>
 
         <Button
             size="small"
