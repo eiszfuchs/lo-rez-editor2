@@ -34,7 +34,11 @@
                     return false;
                 }
 
-                if (name.includes('/lava_')) {
+                if (name.includes('block/water_')) {
+                    return false;
+                }
+
+                if (name.includes('block/lava_')) {
                     return false;
                 }
 
