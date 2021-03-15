@@ -28,7 +28,11 @@
 
         zip.getEntries().forEach(({ entryName }) => {
             try {
-                const [version, palette, texture] = load(entryName);
+                const [draft, version, palette, texture] = load(entryName);
+
+                if (draft) {
+                    return;
+                }
 
                 if (lt(version, $selectedVersion)) {
                     return;

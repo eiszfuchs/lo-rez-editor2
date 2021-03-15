@@ -4,7 +4,7 @@
 </script>
 
 <script>
-    import { Button, Modal } from 'carbon-components-svelte';
+    import { Button, Modal, Checkbox } from 'carbon-components-svelte';
     import Pen16 from 'carbon-icons-svelte/lib/Pen16';
     import Eyedropper16 from 'carbon-icons-svelte/lib/Eyedropper16';
     import TextFill16 from 'carbon-icons-svelte/lib/TextFill16';
@@ -35,7 +35,7 @@
         selectedVersion,
     } from '@/stores/mc-versions.js';
 
-    import { palettes, textures, versions } from '@/stores/project.js';
+    import { drafts, palettes, textures, versions } from '@/stores/project.js';
     import { textureClipboard } from '@/stores/clipboard.js';
 
     import { extract, paint } from '@/modules/extractor.js';
@@ -48,6 +48,7 @@
 
     let issues = [];
     let changes = {};
+    let isDraft = false;
     let issueModalOpen = false;
 
     let pasteRawTexture = null;
@@ -73,6 +74,8 @@
 
     function init() {
         changes = {};
+
+        isDraft = drafts.get(entryName, false);
 
         extract(previewSrc, ({ width, height, palette, getAt }) => {
             texturePalette = palette;
@@ -217,6 +220,7 @@
     }
 
     function onSave() {
+        drafts.set(entryName, isDraft);
         versions.set(entryName, $selectedVersion);
         palettes.set(entryName, texturePalette.toArray());
         textures.set(entryName, flatten(texture));
@@ -419,6 +423,10 @@
         </div>
 
         <div class="action-group">
+            <Checkbox labelText="Draft" size="sm" bind:checked={isDraft} />
+        </div>
+
+        <div class="action-group">
             <Button kind="primary" size="field" icon={Save16} on:click={onSave}>
                 Save
             </Button>
@@ -431,7 +439,7 @@
         size="sm"
         modalHeading="Fix issues with texture"
         primaryButtonText="Apply changes"
-        secondaryButtonText="Dismiss"
+        secondaryButtonText="Fix manually"
         primaryButtonDisabled
         on:click:button--secondary={() => (issueModalOpen = false)}
     >
@@ -631,6 +639,7 @@
 
         display: flex;
         flex-direction: row;
+        align-items: center;
         justify-content: space-between;
     }
 

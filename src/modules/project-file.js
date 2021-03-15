@@ -17,9 +17,9 @@ ProjectFile.prototype.has = function (name) {
     return Object.keys(this.data).includes(name);
 };
 
-ProjectFile.prototype.get = function (name) {
+ProjectFile.prototype.get = function (name, fallback = null) {
     if (!this.has(name)) {
-        return null;
+        return fallback;
     }
 
     return this.data[name];

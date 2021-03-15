@@ -26,6 +26,7 @@
     <ul class="palette-parent">
         {#each [...palette.colors] as color, index}
             <li
+                title={color.toUpperCase()}
                 class:active={index === palette.index}
                 class:highlighted={highlight.includes(color)}
                 on:click={() => activate(index)}

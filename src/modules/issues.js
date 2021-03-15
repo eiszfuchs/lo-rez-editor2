@@ -1,4 +1,4 @@
-import { palettes, textures, versions } from '@/stores/project.js';
+import { drafts, palettes, textures, versions } from '@/stores/project.js';
 import { lt } from '@/modules/version.js';
 
 export const load = (entryName) => {
@@ -14,11 +14,12 @@ export const load = (entryName) => {
         throw new Error(`Could not find ${entryName} in palettes`);
     }
 
-    const texture = textures.get(entryName);
+    const draft = drafts.get(entryName, false);
     const version = versions.get(entryName);
     const palette = palettes.get(entryName);
+    const texture = textures.get(entryName);
 
-    return [version, palette, texture];
+    return [draft, version, palette, texture];
 };
 
 export const checkAsset = (version, entryName, palette) => {

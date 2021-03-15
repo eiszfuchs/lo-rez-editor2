@@ -1,13 +1,14 @@
 <script>
     import { cachedVersions, selectedVersion } from '@/stores/mc-versions.js';
     import { openEditor } from '@/stores/editors.js';
-    import { versions } from '@/stores/project.js';
+    import { drafts, versions } from '@/stores/project.js';
     import { lt } from '@/modules/version.js';
 
     import { TextInput } from 'carbon-components-svelte';
     import WarningAltFilled16 from 'carbon-icons-svelte/lib/WarningAltFilled16';
     import ArrowDown16 from 'carbon-icons-svelte/lib/ArrowDown16';
     import ArrowUp16 from 'carbon-icons-svelte/lib/ArrowUp16';
+    import IncompleteWarning16 from 'carbon-icons-svelte/lib/IncompleteWarning16';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
     import ProgressBar from '@/components/atoms/ProgressBar.svelte';
@@ -22,6 +23,10 @@
         {
             test: ({ entryName: name }) => {
                 if (!name.endsWith('.png')) {
+                    return false;
+                }
+
+                if (name.includes('debug')) {
                     return false;
                 }
 
@@ -87,6 +92,7 @@
                             !versions.has(filename) ? 'version' : null,
                             outdated(filename) ? 'outdated' : null,
                             fromFuture(filename) ? 'fromFuture' : null,
+                            drafts.get(filename, false) ? 'draft' : null,
                         ].filter((d) => d !== null);
 
                         return {
@@ -128,17 +134,20 @@
         {#each zipEntries as entry}
             <li
                 class="entry"
+                class:has-warning={entry.warnings.length > 0}
                 class:hidden={!entry.label.includes(filterSearch)}
                 on:click={entry.onClick}
             >
                 <span>{entry.label}</span>
 
-                {#if !versions.has(entry.filename)}
+                {#if entry.warnings.includes('version')}
                     <WarningAltFilled16 />
-                {:else if outdated(entry.filename)}
+                {:else if entry.warnings.includes('outdated')}
                     <ArrowDown16 />
-                {:else if fromFuture(entry.filename)}
+                {:else if entry.warnings.includes('fromFuture')}
                     <ArrowUp16 />
+                {:else if entry.warnings.includes('draft')}
+                    <IncompleteWarning16 />
                 {/if}
             </li>
         {/each}
@@ -206,6 +215,10 @@
         color: var(--cds-interactive-02);
         margin: var(--cds-spacing-01) var(--cds-spacing-02)
             var(--cds-spacing-01) 0;
+
+        &.has-warning {
+            color: var(--cds-text-error);
+        }
 
         &:hover {
             color: var(--cds-hover-secondary);
