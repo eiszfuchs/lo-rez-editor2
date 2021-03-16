@@ -3,7 +3,9 @@
 
     export let palette;
     export let highlight = [];
+
     let unsubscribe = () => {};
+    let highlightedIndices = [];
 
     function update() {
         palette = palette;
@@ -14,6 +16,11 @@
     }
 
     $: if (palette) {
+        highlightedIndices = highlight.map((color) => palette.findIndex(color));
+    }
+
+    $: if (palette) {
+        unsubscribe();
         unsubscribe = palette.subscribe(update);
     }
 
@@ -28,7 +35,7 @@
             <li
                 title={color.toUpperCase()}
                 class:active={index === palette.index}
-                class:highlighted={highlight.includes(color)}
+                class:highlighted={highlightedIndices.includes(index)}
                 on:click={() => activate(index)}
             >
                 <b style="background-color: {color};" />

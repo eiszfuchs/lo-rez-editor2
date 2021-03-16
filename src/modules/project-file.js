@@ -2,12 +2,13 @@ const { existsSync, readFileSync, writeFileSync } = require('fs');
 
 const JSONL_SEPARATOR = '\n';
 
-export function ProjectFile(filename) {
+export function ProjectFile(filename, culling = null) {
     if (!filename) {
         throw new Error('Must provide filename');
     }
 
     this.filename = filename;
+    this.culling = culling || (({ value }) => value !== null);
     this.data = {};
 
     return this.read();
@@ -56,12 +57,12 @@ ProjectFile.prototype.write = function () {
 
     const buffer = Object.keys(this.data)
         .sort()
-        .map((name) =>
-            JSON.stringify({
-                name,
-                value: this.data[name],
-            })
-        )
+        .map((name) => ({
+            name,
+            value: this.data[name],
+        }))
+        .filter((d) => this.culling(d))
+        .map((d) => JSON.stringify(d))
         .join(JSONL_SEPARATOR);
 
     // Write with trailing new line

@@ -1,6 +1,9 @@
+import { diff } from '@/modules/color.js';
+
 export function Palette(colors = []) {
     this.subscriptions = new Set();
     this.colorWeights = {};
+    this.colorReplacements = {};
 
     this.colors = new Set(colors);
     this.index = 0;
@@ -29,8 +32,48 @@ Palette.prototype.notify = function () {
 };
 
 Palette.prototype.cleanup = function () {
-    // TODO: A certain amount of colors might be too much, cleanup in this case
-    console.debug('TODO: Palette cleanup? size =', this.colors.size);
+    console.debug(`Palette size before cleanup = ${this.colors.size}`);
+    console.groupCollapsed('Palette cleanup');
+
+    for (let colorA of this.colors) {
+        let minDiff = Number.MAX_SAFE_INTEGER;
+        let sibling = null;
+
+        const weightA = this.colorWeights[colorA];
+
+        if (weightA > 8) {
+            continue;
+        }
+
+        for (let colorB of this.colors) {
+            if (colorA === colorB) {
+                continue;
+            }
+
+            const weightB = this.colorWeights[colorB];
+            if (weightB > 8) {
+                continue;
+            }
+
+            const difference = diff(colorA, colorB);
+            if (difference < minDiff) {
+                minDiff = difference;
+                sibling = colorB;
+            }
+        }
+
+        if (minDiff > 12) {
+            continue;
+        }
+
+        console.debug('%d x %s -(±%d)-> %s', weightA, colorA, minDiff, sibling);
+
+        this.colorReplacements[colorA] = sibling;
+        this.colors.delete(colorA);
+    }
+
+    console.groupEnd();
+    console.debug(`Palette size after cleanup = ${this.colors.size}`);
 
     return this.notify();
 };
@@ -47,11 +90,7 @@ Palette.prototype.addColor = function (color) {
 };
 
 Palette.prototype.setColor = function (color) {
-    if (!this.colors.has(color)) {
-        throw new Error(`Color ${color} is not in palette`);
-    }
-
-    this.index = this.toArray().indexOf(color);
+    this.index = this.findIndex(color);
 
     return this.notify();
 };
@@ -64,6 +103,18 @@ Palette.prototype.setIndex = function (index) {
     this.index = index;
 
     return this.notify();
+};
+
+Palette.prototype.findIndex = function (color) {
+    if (!this.colors.has(color)) {
+        if (this.colorReplacements[color]) {
+            return this.findIndex(this.colorReplacements[color]);
+        }
+
+        throw new Error(`Color ${color} is not in palette`);
+    }
+
+    return this.toArray().indexOf(color);
 };
 
 Palette.prototype.getDefault = function () {

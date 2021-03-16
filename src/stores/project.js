@@ -2,8 +2,11 @@ import { ProjectFile } from '../modules/project-file';
 
 export const dials = new ProjectFile('lo-rez/dials.jsonl');
 
-// TODO: only saving `true` really matters
-export const drafts = new ProjectFile('lo-rez/drafts.jsonl');
+export const drafts = new ProjectFile(
+    'lo-rez/drafts.jsonl',
+    // Don't store values that are `false`
+    ({ value }) => value !== false
+);
 
 export const ignorance = new ProjectFile('lo-rez/ignorance.jsonl');
 

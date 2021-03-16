@@ -5,9 +5,6 @@ const toColor = (data) =>
         .map((d) => d.toString(16).padStart(2, '0'))
         .join('')}`.toLowerCase();
 
-const fromColor = (color) =>
-    color.match(/#(.{2})(.{2})(.{2})(.{2})/).map((d) => parseInt(d, 16));
-
 export const extract = (src, callback) => {
     const source = document.createElement('img');
     const palette = new Palette();
