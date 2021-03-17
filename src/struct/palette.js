@@ -32,7 +32,15 @@ Palette.prototype.notify = function () {
 };
 
 Palette.prototype.cleanup = function () {
+    if (this.colors.size < 6) {
+        console.debug('Will not clean up palettes with less than 6 colors');
+
+        return this.notify();
+    }
+
     console.debug(`Palette size before cleanup = ${this.colors.size}`);
+    console.debug([...this.colors]);
+
     console.groupCollapsed('Palette cleanup');
 
     for (let colorA of this.colors) {
@@ -51,7 +59,7 @@ Palette.prototype.cleanup = function () {
             }
 
             const weightB = this.colorWeights[colorB];
-            if (weightB > 8) {
+            if (weightB <= 8) {
                 continue;
             }
 
@@ -73,7 +81,9 @@ Palette.prototype.cleanup = function () {
     }
 
     console.groupEnd();
+
     console.debug(`Palette size after cleanup = ${this.colors.size}`);
+    console.debug([...this.colors]);
 
     return this.notify();
 };

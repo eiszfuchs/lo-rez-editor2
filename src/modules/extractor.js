@@ -19,22 +19,27 @@ export const extract = (src, callback) => {
         canvas.height = height;
 
         const context = canvas.getContext('2d');
+        const getAt = (x, y) => toColor(context.getImageData(x, y, 1, 1).data);
 
         context.drawImage(this, 0, 0);
 
+        /* Okay, so: It seems that `getAt` on some images returns a different
+         * color the first time, and that creates ghost colors in the palette.
+         * Calling `getImageData` once fixes it.
+         */
+        context.getImageData(0, 0, 1, 1);
+
         for (let y = 0; y < height; y += 1) {
             for (let x = 0; x < width; x += 1) {
-                const pixel = context.getImageData(x, y, 1, 1);
-
-                palette.addColor(toColor(pixel.data));
+                palette.addColor(getAt(x, y));
             }
         }
 
         callback({
             width,
             height,
+            getAt,
             palette: palette.cleanup(),
-            getAt: (x, y) => toColor(context.getImageData(x, y, 1, 1).data),
         });
     });
 

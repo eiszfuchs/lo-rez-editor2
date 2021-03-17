@@ -1,4 +1,6 @@
 <script context="module">
+    export const FIX_AUTO = 'auto';
+
     export const PASTE_INDICES = 'indices';
     export const PASTE_COLORS = 'colors';
 </script>
@@ -26,6 +28,7 @@
 
     import Preview from '../atoms/PixelPreview.svelte';
     import PalettePicker from '../atoms/PalettePicker.svelte';
+    import PalettePreview from '../atoms/PalettePreview.svelte';
     import CompareSwitcher from '../atoms/CompareSwitcher.svelte';
     import ComparePanel from '../atoms/ComparePanel.svelte';
 
@@ -50,6 +53,9 @@
     let changes = {};
     let isDraft = false;
     let issueModalOpen = false;
+    let fixedTexture = [];
+    let savedPalette = [];
+    let fixMode = null;
 
     let pasteRawTexture = null;
     let pasteColorTexture = null;
@@ -82,12 +88,21 @@
             texturePicker = getAt;
 
             const savedFlatTexture = textures.get(entryName);
-
             if (savedFlatTexture) {
                 issues = checkAsset($selectedVersion, entryName, palette);
                 issueModalOpen = issues.length > 0;
+                fixMode = null;
 
                 texture = wrap(savedFlatTexture, width / 2);
+
+                savedPalette = palettes.get(entryName);
+                if (savedPalette) {
+                    const fixedFlatTexture = savedFlatTexture.map((d) =>
+                        palette.findIndex(savedPalette[d])
+                    );
+
+                    fixedTexture = wrap(fixedFlatTexture, width / 2);
+                }
             } else {
                 texture = empty(width / 2, height / 2, palette.getDefault());
             }
@@ -204,6 +219,15 @@
 
         pasteModalOpen = true;
         pasteMode = null;
+    }
+
+    function onFixApply() {
+        if (fixMode === FIX_AUTO) {
+            texture = fixedTexture;
+        }
+
+        issueModalOpen = false;
+        fixMode = null;
     }
 
     function onPasteApply() {
@@ -440,12 +464,86 @@
         modalHeading="Fix issues with texture"
         primaryButtonText="Apply changes"
         secondaryButtonText="Fix manually"
-        primaryButtonDisabled
+        primaryButtonDisabled={fixMode === null}
+        on:submit={onFixApply}
         on:click:button--secondary={() => (issueModalOpen = false)}
     >
-        {#each issues as issue}
-            <p class="issue">{issue}</p>
-        {/each}
+        {#if issues.includes('old_samples')}
+            <p class="issue">
+                This texture was sampled using an older Minecraft version.
+            </p>
+        {/if}
+
+        {#if issues.includes('too_many_colors')}
+            <p class="issue">
+                The saved version of this texture uses more colors than the
+                palette provides.
+            </p>
+        {/if}
+
+        {#if issues.includes('no_palette')}
+            <p class="issue">
+                Issues cannot be recovered automatically as this texture was
+                saved in an older version of lo-rez-editor.
+            </p>
+        {/if}
+
+        {#if issues.includes('palette_changed')}
+            <p class="issue">
+                The color palette has changed since this texture was saved.
+            </p>
+
+            <table>
+                <tr>
+                    <th>Saved palette</th>
+
+                    <th>Current palette</th>
+                </tr>
+
+                <tr>
+                    <td width="50%">
+                        <PalettePreview colors={savedPalette} />
+                    </td>
+
+                    <td width="50%">
+                        <PalettePreview colors={[...texturePalette.colors]} />
+                    </td>
+                </tr>
+            </table>
+
+            <table>
+                <tr>
+                    <th>Saved texture</th>
+
+                    <th>Auto-fix</th>
+                </tr>
+
+                <tr>
+                    <td>
+                        <div class="button-padding">
+                            <Preview
+                                size={16}
+                                colors={savedPalette}
+                                {texture}
+                            />
+                        </div>
+                    </td>
+
+                    <td class:selected={fixMode === FIX_AUTO}>
+                        <Button
+                            kind="ghost"
+                            on:click={() => (fixMode = FIX_AUTO)}
+                        >
+                            <Preview
+                                size={16}
+                                colors={texturePalette.toArray()}
+                                texture={fixedTexture}
+                            />
+                        </Button>
+                    </td>
+                </tr>
+            </table>
+        {/if}
     </Modal>
 
     <Modal

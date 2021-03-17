@@ -35,25 +35,17 @@ export const checkAsset = (version, entryName, palette) => {
     console.debug('Check palette: %s < %s', savedMinSize, palette.colors.size);
 
     if (lt(savedVersion, version)) {
-        issues.push(
-            'This texture was sampled using an older Minecraft version.'
-        );
+        issues.push('old_samples');
     }
 
     if (savedMinSize >= palette.colors.size) {
-        issues.push(
-            'The saved version of this texture uses more colors than the palette provides.'
-        );
+        issues.push('too_many_colors');
     }
 
     if (!savedPalette) {
-        issues.push(
-            'Issues cannot be recovered automatically as this texture was saved in an older version of lo-rez-editor.'
-        );
+        issues.push('no_palette');
     } else if (savedPalette.join(':') !== palette.toArray().join(':')) {
-        issues.push(
-            'The color palette has changed since this texture was saved.'
-        );
+        issues.push('palette_changed');
     }
 
     return issues;

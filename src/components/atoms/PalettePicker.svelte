@@ -1,18 +1,22 @@
 <script>
     import { onDestroy } from 'svelte';
 
+    import { sort } from '@/modules/color.js';
+
     export let palette;
     export let highlight = [];
 
     let unsubscribe = () => {};
+    let colorArray = [];
     let highlightedIndices = [];
+    let sorted = [];
 
     function update() {
         palette = palette;
     }
 
-    function activate(index) {
-        palette.setIndex(index);
+    function activate(color) {
+        palette.setColor(color);
     }
 
     $: if (palette) {
@@ -22,6 +26,9 @@
     $: if (palette) {
         unsubscribe();
         unsubscribe = palette.subscribe(update);
+
+        colorArray = [...palette.colors];
+        sorted = sort(colorArray);
     }
 
     onDestroy(() => {
@@ -31,14 +38,16 @@
 
 {#if palette}
     <ul class="palette-parent">
-        {#each [...palette.colors] as color, index}
+        {#each sorted as color}
             <li
                 title={color.toUpperCase()}
-                class:active={index === palette.index}
-                class:highlighted={highlightedIndices.includes(index)}
-                on:click={() => activate(index)}
+                class:active={colorArray.indexOf(color) === palette.index}
+                class:highlighted={highlightedIndices.includes(
+                    colorArray.indexOf(color)
+                )}
+                on:click={() => activate(color)}
             >
-                <b style="background-color: {color};" />
+                <b style="color: {color};" />
             </li>
         {/each}
     </ul>
@@ -48,27 +57,31 @@
     .palette-parent {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--cds-spacing-03);
 
         background-color: var(--cds-field-01);
 
         list-style: none;
-        padding: var(--cds-spacing-04);
+        padding: var(--cds-spacing-03);
 
         li {
             display: flex;
             align-items: stretch;
 
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
+            padding: 3px;
 
-            box-shadow: 0 0 0 2px var(--cds-ui-02);
             background-image: var(--tex-transparent-background);
 
             cursor: pointer;
 
             b {
                 flex: 1 0 100%;
+                background-color: currentColor;
+                box-shadow: 0 0 0 0 var(--cds-ui-background),
+                    0 0 0 3px currentColor;
+
+                transition: box-shadow 70ms linear;
             }
 
             &.highlighted {
@@ -76,12 +89,18 @@
                 top: -2px;
             }
 
-            &.active {
-                box-shadow: 0 0 0 2px var(--cds-ui-05);
+            &:hover {
+                b {
+                    box-shadow: 0 0 0 1px var(--cds-field-01),
+                        0 0 0 3px currentColor;
+                }
             }
 
-            &:hover {
-                box-shadow: 0 0 0 2px var(--cds-ui-04);
+            &.active {
+                b {
+                    box-shadow: 0 0 0 1px var(--cds-ui-background),
+                        0 0 0 3px var(--cds-ui-05);
+                }
             }
         }
     }
