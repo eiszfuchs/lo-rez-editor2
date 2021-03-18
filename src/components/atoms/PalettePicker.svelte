@@ -71,7 +71,7 @@
             height: 20px;
             padding: 3px;
 
-            background-image: var(--tex-transparent-background);
+            background: var(--tex-transparent-background);
 
             cursor: pointer;
 

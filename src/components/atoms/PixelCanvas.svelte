@@ -237,7 +237,7 @@
         display: flex;
         flex-direction: column;
 
-        background-image: var(--tex-transparent-background);
+        background: var(--tex-transparent-background);
     }
 
     .row {

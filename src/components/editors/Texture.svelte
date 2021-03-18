@@ -1,11 +1,14 @@
 <script context="module">
     export const FIX_AUTO = 'auto';
+    export const FIX_LEGACY = 'legacy';
 
     export const PASTE_INDICES = 'indices';
     export const PASTE_COLORS = 'colors';
 </script>
 
 <script>
+    import { createEventDispatcher } from 'svelte';
+
     import { Button, Modal, Checkbox } from 'carbon-components-svelte';
     import Pen16 from 'carbon-icons-svelte/lib/Pen16';
     import Eyedropper16 from 'carbon-icons-svelte/lib/Eyedropper16';
@@ -40,6 +43,7 @@
 
     import { drafts, palettes, textures, versions } from '@/stores/project.js';
     import { textureClipboard } from '@/stores/clipboard.js';
+    import { closeOnSave } from '@/stores/settings.js';
 
     import { extract, paint } from '@/modules/extractor.js';
     import { flatten, empty, wrap } from '@/modules/texture.js';
@@ -54,6 +58,7 @@
     let isDraft = false;
     let issueModalOpen = false;
     let fixedTexture = [];
+    let fromLegacyTexture = [];
     let savedPalette = [];
     let fixMode = null;
 
@@ -67,6 +72,8 @@
     let texture = [];
     let texturePicker;
     let textureTool = TOOL_PEN;
+
+    const dispatch = createEventDispatcher();
 
     const dataUriPrefix = 'data:image/png;base64,';
 
@@ -91,7 +98,10 @@
             if (savedFlatTexture) {
                 issues = checkAsset($selectedVersion, entryName, palette);
                 issueModalOpen = issues.length > 0;
+
                 fixMode = null;
+                fixedTexture = [];
+                fromLegacyTexture = [];
 
                 texture = wrap(savedFlatTexture, width / 2);
 
@@ -102,6 +112,12 @@
                     );
 
                     fixedTexture = wrap(fixedFlatTexture, width / 2);
+                } else {
+                    const fixedFlatTexture = savedFlatTexture.map((d) =>
+                        palette.recoverIndex(d)
+                    );
+
+                    fromLegacyTexture = wrap(fixedFlatTexture, width / 2);
                 }
             } else {
                 texture = empty(width / 2, height / 2, palette.getDefault());
@@ -226,6 +242,10 @@
             texture = fixedTexture;
         }
 
+        if (fixMode === FIX_LEGACY) {
+            texture = fromLegacyTexture;
+        }
+
         issueModalOpen = false;
         fixMode = null;
     }
@@ -248,6 +268,10 @@
         versions.set(entryName, $selectedVersion);
         palettes.set(entryName, texturePalette.toArray());
         textures.set(entryName, flatten(texture));
+
+        if ($closeOnSave) {
+            dispatch('close');
+        }
     }
 </script>
 
@@ -479,6 +503,41 @@
                 The saved version of this texture uses more colors than the
                 palette provides.
             </p>
+
+            {#if fromLegacyTexture.length}
+                <table>
+                    <tr>
+                        <th>Current texture</th>
+
+                        <th>Auto-fix</th>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <div class="button-padding">
+                                <Preview
+                                    size={16}
+                                    colors={texturePalette.toArray()}
+                                    {texture}
+                                />
+                            </div>
+                        </td>
+
+                        <td class:selected={fixMode === FIX_LEGACY}>
+                            <Button
+                                kind="ghost"
+                                on:click={() => (fixMode = FIX_LEGACY)}
+                            >
+                                <Preview
+                                    size={16}
+                                    colors={texturePalette.toArray()}
+                                    texture={fromLegacyTexture}
+                                />
+                            </Button>
+                        </td>
+                    </tr>
+                </table>
+            {/if}
         {/if}
 
         {#if issues.includes('no_palette')}
@@ -493,56 +552,60 @@
                 The color palette has changed since this texture was saved.
             </p>
 
-            <table>
-                <tr>
-                    <th>Saved palette</th>
+            {#if fixedTexture.length}
+                <table>
+                    <tr>
+                        <th>Saved palette</th>
 
-                    <th>Current palette</th>
-                </tr>
+                        <th>Current palette</th>
+                    </tr>
 
-                <tr>
-                    <td width="50%">
-                        <PalettePreview colors={savedPalette} />
-                    </td>
+                    <tr>
+                        <td width="50%">
+                            <PalettePreview colors={savedPalette} />
+                        </td>
 
-                    <td width="50%">
-                        <PalettePreview colors={[...texturePalette.colors]} />
-                    </td>
-                </tr>
-            </table>
-
-            <table>
-                <tr>
-                    <th>Saved texture</th>
-
-                    <th>Auto-fix</th>
-                </tr>
-
-                <tr>
-                    <td>
-                        <div class="button-padding">
-                            <Preview
-                                size={16}
-                                colors={savedPalette}
-                                {texture}
+                        <td width="50%">
+                            <PalettePreview
+                                colors={[...texturePalette.colors]}
                             />
-                        </div>
-                    </td>
+                        </td>
+                    </tr>
+                </table>
 
-                    <td class:selected={fixMode === FIX_AUTO}>
-                        <Button
-                            kind="ghost"
-                            on:click={() => (fixMode = FIX_AUTO)}
-                        >
-                            <Preview
-                                size={16}
-                                colors={texturePalette.toArray()}
-                                texture={fixedTexture}
-                            />
-                        </Button>
-                    </td>
-                </tr>
-            </table>
+                <table>
+                    <tr>
+                        <th>Saved texture</th>
+
+                        <th>Auto-fix</th>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <div class="button-padding">
+                                <Preview
+                                    size={16}
+                                    colors={savedPalette}
+                                    {texture}
+                                />
+                            </div>
+                        </td>
+
+                        <td class:selected={fixMode === FIX_AUTO}>
+                            <Button
+                                kind="ghost"
+                                on:click={() => (fixMode = FIX_AUTO)}
+                            >
+                                <Preview
+                                    size={16}
+                                    colors={texturePalette.toArray()}
+                                    texture={fixedTexture}
+                                />
+                            </Button>
+                        </td>
+                    </tr>
+                </table>
+            {/if}
         {/if}
     </Modal>
 
@@ -635,7 +698,7 @@
 
     img {
         image-rendering: pixelated;
-        background-image: var(--tex-transparent-background);
+        background: var(--tex-transparent-background);
     }
 
     // What, a table? In 2021?
@@ -706,7 +769,7 @@
         right: var(--cds-spacing-03);
         bottom: var(--cds-spacing-03);
 
-        background-image: var(--tex-transparent-background);
+        background: var(--tex-transparent-background);
         background-position: center;
     }
 

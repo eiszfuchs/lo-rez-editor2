@@ -8,6 +8,9 @@ export function Palette(colors = []) {
     this.colors = new Set(colors);
     this.index = 0;
 
+    // Colors without cleanup (for recovery)
+    this.rawColors = new Set(colors);
+
     return this;
 }
 
@@ -39,8 +42,6 @@ Palette.prototype.cleanup = function () {
     }
 
     console.debug(`Palette size before cleanup = ${this.colors.size}`);
-    console.debug([...this.colors]);
-
     console.groupCollapsed('Palette cleanup');
 
     for (let colorA of this.colors) {
@@ -81,9 +82,7 @@ Palette.prototype.cleanup = function () {
     }
 
     console.groupEnd();
-
     console.debug(`Palette size after cleanup = ${this.colors.size}`);
-    console.debug([...this.colors]);
 
     return this.notify();
 };
@@ -94,6 +93,7 @@ Palette.prototype.addColor = function (color) {
     }
 
     this.colors.add(color);
+    this.rawColors.add(color);
     this.colorWeights[color] = (this.colorWeights[color] || 0) + 1;
 
     return this.notify();
@@ -125,6 +125,14 @@ Palette.prototype.findIndex = function (color) {
     }
 
     return this.toArray().indexOf(color);
+};
+
+Palette.prototype.recoverIndex = function (rawIndex) {
+    if (index < 0 || index >= this.rawColors.size) {
+        throw new Error(`Palette legacy index ${rawIndex} out of range`);
+    }
+
+    return this.findIndex([...this.rawColors][rawIndex]);
 };
 
 Palette.prototype.getDefault = function () {

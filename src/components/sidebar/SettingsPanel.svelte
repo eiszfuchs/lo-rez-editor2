@@ -5,29 +5,61 @@
         Checkbox,
         Dropdown,
     } from 'carbon-components-svelte';
+
+    import {
+        TRANSPARENT_FOLLOW,
+        TRANSPARENT_BRIGHT,
+        TRANSPARENT_DARK,
+        TRANSPARENT_WHITE,
+        TRANSPARENT_FUCHSIA,
+        TRANSPARENT_BLACK,
+        closeOnSave,
+        transparentBackground,
+    } from '@/stores/settings.js';
+
+    const transparencyItems = [
+        { id: TRANSPARENT_FOLLOW, text: 'Follow system' },
+        { id: TRANSPARENT_BRIGHT, text: 'Bright' },
+        { id: TRANSPARENT_DARK, text: 'Dark' },
+        { id: TRANSPARENT_WHITE, text: 'Solid white' },
+        { id: TRANSPARENT_FUCHSIA, text: 'Solid fuchsia' },
+        { id: TRANSPARENT_BLACK, text: 'Solid black' },
+    ];
+
+    let selectedTransparency = transparencyItems.findIndex(
+        ({ id }) => id === $transparentBackground
+    );
+
+    $: $transparentBackground = transparencyItems[selectedTransparency].id;
 </script>
 
-<!--
-    TODO: Accordions sure are nice, but the borders
-    and paddings don't quite fit the rest of the sidebar
--->
-<Accordion size="sm">
-    <AccordionItem title="Settings (TODO)">
-        <p>
-            <Checkbox labelText="Close editor on save" />
-        </p>
-        <p>
+<div class="border-hack">
+    <Accordion size="sm">
+        <AccordionItem title="Global settings">
             <Dropdown
-                type="inline"
                 direction="top"
                 titleText="Transparency"
-                selectedIndex={0}
-                items={[
-                    { id: 'follow', text: 'Follow system' },
-                    { id: 'bright', text: 'Bright' },
-                    { id: 'dark', text: 'Dark' },
-                ]}
+                items={transparencyItems}
+                bind:selectedIndex={selectedTransparency}
             />
-        </p>
-    </AccordionItem>
-</Accordion>
+
+            <div class="spacer" />
+
+            <Checkbox
+                labelText="Close editors on save"
+                bind:checked={$closeOnSave}
+            />
+        </AccordionItem>
+    </Accordion>
+</div>
+
+<style lang="scss">
+    .spacer {
+        height: var(--cds-spacing-04);
+    }
+
+    .border-hack {
+        // Hacky trick to get rid of the funky accordion borders
+        --cds-ui-03: transparent;
+    }
+</style>

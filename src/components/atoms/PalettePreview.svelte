@@ -26,7 +26,7 @@
             height: 20px;
             padding: 3px;
 
-            background-image: var(--tex-transparent-background);
+            background: var(--tex-transparent-background);
 
             b {
                 flex: 1 0 100%;
