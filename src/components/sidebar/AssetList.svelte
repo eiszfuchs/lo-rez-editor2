@@ -122,6 +122,8 @@
     $: completedEntries = zipEntries.filter(
         ({ warnings }) => warnings.length === 0
     ).length;
+
+    versions.subscribe(makeList);
 </script>
 
 <div class="layout">

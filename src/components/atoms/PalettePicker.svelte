@@ -20,7 +20,13 @@
     }
 
     $: if (palette) {
-        highlightedIndices = highlight.map((color) => palette.findIndex(color));
+        highlightedIndices = highlight.map((color) => {
+            try {
+                return palette.findIndex(color);
+            } catch (reason) {
+                return;
+            }
+        });
     }
 
     $: if (palette) {

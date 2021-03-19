@@ -7,12 +7,30 @@ export function ProjectFile(filename, culling = null) {
         throw new Error('Must provide filename');
     }
 
+    this.subscriptions = new Set();
+
     this.filename = filename;
     this.culling = culling || (({ value }) => value !== null);
     this.data = {};
 
     return this.read();
 }
+
+ProjectFile.prototype.subscribe = function (callback) {
+    this.subscriptions.add(callback);
+
+    return () => {
+        this.subscriptions.delete(callback);
+    };
+};
+
+ProjectFile.prototype.notify = function () {
+    this.subscriptions.forEach((callback) => {
+        callback(this);
+    });
+
+    return this;
+};
 
 ProjectFile.prototype.has = function (name) {
     return Object.keys(this.data).includes(name);
@@ -68,5 +86,5 @@ ProjectFile.prototype.write = function () {
     // Write with trailing new line
     writeFileSync(this.filename, `${buffer}\n`, { encoding: 'utf-8' });
 
-    return this;
+    return this.notify();
 };

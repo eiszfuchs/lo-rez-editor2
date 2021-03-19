@@ -1,6 +1,7 @@
 <script context="module">
     export const FIX_AUTO = 'auto';
     export const FIX_LEGACY = 'legacy';
+    export const FIX_EXPORT = 'export';
 
     export const PASTE_INDICES = 'indices';
     export const PASTE_COLORS = 'colors';
@@ -29,11 +30,12 @@
         TOOL_MOVE,
     } from '../atoms/PixelCanvas.svelte';
 
-    import Preview from '../atoms/PixelPreview.svelte';
+    import PickableImage from '../atoms/PickableImage.svelte';
     import PalettePicker from '../atoms/PalettePicker.svelte';
     import PalettePreview from '../atoms/PalettePreview.svelte';
     import CompareSwitcher from '../atoms/CompareSwitcher.svelte';
     import ComparePanel from '../atoms/ComparePanel.svelte';
+    import ChoiceTable from '../modules/ChoiceTable.svelte';
 
     import {
         cachedVersions,
@@ -59,18 +61,20 @@
     let issueModalOpen = false;
     let fixedTexture = [];
     let fromLegacyTexture = [];
+    let fromExportTexture = [];
     let savedPalette = [];
+    let fixOptions = [];
     let fixMode = null;
 
     let pasteRawTexture = null;
     let pasteColorTexture = null;
     let pasteColors = null;
     let pasteModalOpen = false;
+    let pasteOptions = [];
     let pasteMode = null;
 
     let texturePalette = null;
     let texture = [];
-    let texturePicker;
     let textureTool = TOOL_PEN;
 
     const dispatch = createEventDispatcher();
@@ -87,12 +91,12 @@
 
     function init() {
         changes = {};
+        fixOptions = [];
 
         isDraft = drafts.get(entryName, false);
 
-        extract(previewSrc, ({ width, height, palette, getAt }) => {
+        extract(previewSrc, ({ width, height, palette }) => {
             texturePalette = palette;
-            texturePicker = getAt;
 
             const savedFlatTexture = textures.get(entryName);
             if (savedFlatTexture) {
@@ -112,16 +116,85 @@
                     );
 
                     fixedTexture = wrap(fixedFlatTexture, width / 2);
+
+                    fixOptions = [
+                        ...fixOptions,
+                        {
+                            heading: 'Saved texture',
+                            size: 16,
+                            colors: savedPalette,
+                            texture: texture,
+                        },
+                        {
+                            heading: 'Auto-fix',
+                            value: FIX_AUTO,
+                            size: 16,
+                            colors: texturePalette.toArray(),
+                            texture: fixedTexture,
+                        },
+                    ];
                 } else {
-                    const fixedFlatTexture = savedFlatTexture.map((d) =>
-                        palette.recoverIndex(d)
-                    );
+                    const fixedFlatTexture = savedFlatTexture.map((d) => {
+                        try {
+                            return palette.recoverIndex(d);
+                        } catch (reason) {
+                            return texturePalette.getDefault();
+                        }
+                    });
 
                     fromLegacyTexture = wrap(fixedFlatTexture, width / 2);
+
+                    fixOptions = [
+                        ...fixOptions,
+                        {
+                            heading: 'From legacy',
+                            value: FIX_LEGACY,
+                            size: 16,
+                            colors: texturePalette.toArray(),
+                            texture: fromLegacyTexture,
+                        },
+                    ];
                 }
             } else {
                 texture = empty(width / 2, height / 2, palette.getDefault());
             }
+
+            fixOptions = [
+                {
+                    heading: 'Current texture',
+                    size: 16,
+                    colors: texturePalette.toArray(),
+                    texture: texture,
+                },
+                ...fixOptions,
+            ];
+
+            extract(epPreviewSrc, ({ width, height, getAt }) => {
+                fromExportTexture = empty(width, height, palette.getDefault());
+
+                for (let y = 0; y < height; y += 1) {
+                    for (let x = 0; x < width; x += 1) {
+                        let index = palette.getDefault();
+
+                        try {
+                            index = texturePalette.findIndex(getAt(x, y), 32);
+                        } catch (reason) {}
+
+                        fromExportTexture[y][x] = index;
+                    }
+                }
+
+                fixOptions = [
+                    ...fixOptions,
+                    {
+                        heading: 'From exported',
+                        value: FIX_EXPORT,
+                        size: 16,
+                        colors: texturePalette.toArray(),
+                        texture: fromExportTexture,
+                    },
+                ];
+            });
 
             issues = issues;
         });
@@ -181,28 +254,21 @@
     // Init like this to prevent re-load when another editor is opened
     $: init(previewSrc);
 
-    const posFromEvent = (event) => [
-        Math.floor(event.offsetX / 12),
-        Math.floor(event.offsetY / 12),
-    ];
-
     let highlightPalette = [];
 
-    function leaveOriginal() {
+    function onPickablePick({ detail: color }) {
+        try {
+            return texturePalette.setColor(color);
+        } catch (reason) {
+            return;
+        }
+    }
+
+    function onPickableHover({ detail: color }) {
         highlightPalette = [];
-    }
-
-    function overOriginal(event) {
-        const [pixelX, pixelY] = posFromEvent(event);
-
-        highlightPalette = [texturePicker(pixelX, pixelY)];
-        event.preventDefault();
-    }
-
-    function clickOriginal(event) {
-        const [pixelX, pixelY] = posFromEvent(event);
-
-        texturePalette.setColor(texturePicker(pixelX, pixelY));
+        if (color) {
+            highlightPalette = [color];
+        }
     }
 
     function onCopy() {
@@ -216,6 +282,8 @@
         const { texture, colors } = $textureClipboard;
         const availableColors = texturePalette.toArray();
         const fallbackIndex = texturePalette.getDefault();
+
+        pasteColors = colors;
 
         pasteRawTexture = wrap(texture, 8);
         pasteColorTexture = wrap(
@@ -231,7 +299,28 @@
             8
         );
 
-        pasteColors = colors;
+        pasteOptions = [
+            {
+                heading: 'Clipboard',
+                size: 16,
+                colors: pasteColors,
+                texture: pasteRawTexture,
+            },
+            {
+                heading: 'Paste indices',
+                value: PASTE_INDICES,
+                size: 16,
+                colors: availableColors,
+                texture: pasteRawTexture,
+            },
+            {
+                heading: 'Paste colors',
+                value: PASTE_COLORS,
+                size: 16,
+                colors: availableColors,
+                texture: pasteColorTexture,
+            },
+        ];
 
         pasteModalOpen = true;
         pasteMode = null;
@@ -244,6 +333,10 @@
 
         if (fixMode === FIX_LEGACY) {
             texture = fromLegacyTexture;
+        }
+
+        if (fixMode === FIX_EXPORT) {
+            texture = fromExportTexture;
         }
 
         issueModalOpen = false;
@@ -281,12 +374,11 @@
             <CompareSwitcher>
                 <ComparePanel label={$selectedVersion}>
                     <div class="texture-parent">
-                        <img
-                            alt=""
+                        <PickableImage
                             src={previewSrc}
-                            on:mousemove={overOriginal}
-                            on:mouseleave={leaveOriginal}
-                            on:click={clickOriginal}
+                            scale={12}
+                            on:pick={onPickablePick}
+                            on:hover={onPickableHover}
                         />
                     </div>
                 </ComparePanel>
@@ -294,7 +386,12 @@
                 {#each Object.entries(changes) as [version, data]}
                     <ComparePanel label={version}>
                         <div class="texture-parent">
-                            <img alt="" src={data} />
+                            <PickableImage
+                                src={data}
+                                scale={12}
+                                on:pick={onPickablePick}
+                                on:hover={onPickableHover}
+                            />
                         </div>
                     </ComparePanel>
                 {/each}
@@ -318,8 +415,12 @@
 
                 <ComparePanel label="Exported">
                     <div class="texture-parent">
-                        <!-- TODO: Pick matching colors from here -->
-                        <img src={epPreviewSrc} alt="" />
+                        <PickableImage
+                            src={epPreviewSrc}
+                            scale={24}
+                            on:pick={onPickablePick}
+                            on:hover={onPickableHover}
+                        />
                     </div>
                 </ComparePanel>
             </CompareSwitcher>
@@ -492,6 +593,12 @@
         on:submit={onFixApply}
         on:click:button--secondary={() => (issueModalOpen = false)}
     >
+        {#if issues.includes('no_palette')}
+            <p class="issue">
+                This texture was saved in an older version of lo-rez-editor.
+            </p>
+        {/if}
+
         {#if issues.includes('old_samples')}
             <p class="issue">
                 This texture was sampled using an older Minecraft version.
@@ -503,48 +610,6 @@
                 The saved version of this texture uses more colors than the
                 palette provides.
             </p>
-
-            {#if fromLegacyTexture.length}
-                <table>
-                    <tr>
-                        <th>Current texture</th>
-
-                        <th>Auto-fix</th>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            <div class="button-padding">
-                                <Preview
-                                    size={16}
-                                    colors={texturePalette.toArray()}
-                                    {texture}
-                                />
-                            </div>
-                        </td>
-
-                        <td class:selected={fixMode === FIX_LEGACY}>
-                            <Button
-                                kind="ghost"
-                                on:click={() => (fixMode = FIX_LEGACY)}
-                            >
-                                <Preview
-                                    size={16}
-                                    colors={texturePalette.toArray()}
-                                    texture={fromLegacyTexture}
-                                />
-                            </Button>
-                        </td>
-                    </tr>
-                </table>
-            {/if}
-        {/if}
-
-        {#if issues.includes('no_palette')}
-            <p class="issue">
-                Issues cannot be recovered automatically as this texture was
-                saved in an older version of lo-rez-editor.
-            </p>
         {/if}
 
         {#if issues.includes('palette_changed')}
@@ -552,61 +617,18 @@
                 The color palette has changed since this texture was saved.
             </p>
 
-            {#if fixedTexture.length}
-                <table>
-                    <tr>
-                        <th>Saved palette</th>
+            <p class="help">
+                <span>Saved palette</span>
+                <PalettePreview colors={savedPalette} />
+            </p>
 
-                        <th>Current palette</th>
-                    </tr>
-
-                    <tr>
-                        <td width="50%">
-                            <PalettePreview colors={savedPalette} />
-                        </td>
-
-                        <td width="50%">
-                            <PalettePreview
-                                colors={[...texturePalette.colors]}
-                            />
-                        </td>
-                    </tr>
-                </table>
-
-                <table>
-                    <tr>
-                        <th>Saved texture</th>
-
-                        <th>Auto-fix</th>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            <div class="button-padding">
-                                <Preview
-                                    size={16}
-                                    colors={savedPalette}
-                                    {texture}
-                                />
-                            </div>
-                        </td>
-
-                        <td class:selected={fixMode === FIX_AUTO}>
-                            <Button
-                                kind="ghost"
-                                on:click={() => (fixMode = FIX_AUTO)}
-                            >
-                                <Preview
-                                    size={16}
-                                    colors={texturePalette.toArray()}
-                                    texture={fixedTexture}
-                                />
-                            </Button>
-                        </td>
-                    </tr>
-                </table>
-            {/if}
+            <p class="help">
+                <span>Current palette</span>
+                <PalettePreview colors={[...texturePalette.colors]} />
+            </p>
         {/if}
+
+        <ChoiceTable bind:choice={fixMode} options={fixOptions} />
     </Modal>
 
     <Modal
@@ -621,65 +643,7 @@
         on:submit={onPasteApply}
         on:click:button--secondary={() => (pasteModalOpen = false)}
     >
-        <table>
-            <tr>
-                {#if pasteColors && pasteRawTexture}
-                    <th>Clipboard</th>
-                {/if}
-
-                {#if pasteRawTexture}
-                    <th>Paste indices</th>
-                {/if}
-
-                {#if pasteColorTexture}
-                    <th>Paste colors</th>
-                {/if}
-            </tr>
-
-            <tr>
-                {#if pasteColors && pasteRawTexture}
-                    <td>
-                        <div class="button-padding">
-                            <Preview
-                                size={16}
-                                colors={pasteColors}
-                                texture={pasteRawTexture}
-                            />
-                        </div>
-                    </td>
-                {/if}
-
-                {#if pasteRawTexture}
-                    <td class:selected={pasteMode === PASTE_INDICES}>
-                        <Button
-                            kind="ghost"
-                            on:click={() => (pasteMode = PASTE_INDICES)}
-                        >
-                            <Preview
-                                size={16}
-                                colors={texturePalette.toArray()}
-                                texture={pasteRawTexture}
-                            />
-                        </Button>
-                    </td>
-                {/if}
-
-                {#if pasteColorTexture}
-                    <td class:selected={pasteMode === PASTE_COLORS}>
-                        <Button
-                            kind="ghost"
-                            on:click={() => (pasteMode = PASTE_COLORS)}
-                        >
-                            <Preview
-                                size={16}
-                                colors={texturePalette.toArray()}
-                                texture={pasteColorTexture}
-                            />
-                        </Button>
-                    </td>
-                {/if}
-            </tr>
-        </table>
+        <ChoiceTable bind:choice={pasteMode} options={pasteOptions} />
     </Modal>
 </div>
 
@@ -694,42 +658,6 @@
         &:not(.active) {
             display: none;
         }
-    }
-
-    img {
-        image-rendering: pixelated;
-        background: var(--tex-transparent-background);
-    }
-
-    // What, a table? In 2021?
-    table {
-        // width: 100%;
-        table-layout: fixed;
-
-        th {
-            text-align: left;
-
-            color: var(--cds-text-02);
-            padding-bottom: var(--cds-spacing-03);
-
-            font-size: var(--cds-productive-heading-01-font-size);
-            font-weight: normal;
-            line-height: var(--cds-productive-heading-01-line-height);
-            letter-spacing: var(--cds-productive-heading-01-letter-spacing);
-        }
-
-        td {
-            vertical-align: top;
-
-            &.selected {
-                background-color: var(--cds-field-02);
-            }
-        }
-    }
-
-    // This is not ideal, button paddings might change
-    .button-padding {
-        padding: calc(0.875rem - 3px) 16px;
     }
 
     .layout-box {
@@ -750,7 +678,8 @@
 
     .texture-parent {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
+        justify-content: center;
 
         padding: var(--cds-spacing-03);
 
@@ -806,5 +735,10 @@
 
     .issue {
         color: var(--cds-text-error);
+        margin-bottom: var(--cds-spacing-04);
+    }
+
+    .help {
+        margin-bottom: var(--cds-spacing-04);
     }
 </style>
