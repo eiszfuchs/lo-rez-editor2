@@ -1,7 +1,7 @@
 <script>
     import { onDestroy } from 'svelte';
 
-    import { sort } from '@/modules/color.js';
+    import { sortNearest } from '@/modules/color.js';
 
     export let palette;
     export let highlight = [];
@@ -34,7 +34,7 @@
         unsubscribe = palette.subscribe(update);
 
         colorArray = [...palette.colors];
-        sorted = sort(colorArray);
+        sorted = sortNearest(colorArray);
     }
 
     onDestroy(() => {

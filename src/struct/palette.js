@@ -1,4 +1,4 @@
-import { diff, sort } from '@/modules/color.js';
+import { diff, sortNearest } from '@/modules/color.js';
 
 export function Palette(colors = []) {
     this.subscriptions = new Set();
@@ -88,7 +88,7 @@ Palette.prototype.cleanupNearest = function () {
 Palette.prototype.cleanupMedian = function () {
     let groupStart = null;
     let group = [];
-    const sortedColors = sort([...this.colors]);
+    const sortedColors = sortNearest([...this.colors]);
 
     for (let color of sortedColors) {
         if (groupStart === null) {

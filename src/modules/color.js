@@ -35,7 +35,27 @@ export const diff = (colorA, colorB) => {
     );
 };
 
-export const sort = (colorIterable) => {
+export const sortRgba = (colorIterable) =>
+    [...colorIterable].sort((colorA, colorB) => {
+        const [redA, greenA, blueA, alphaA] = fromHex(colorA);
+        const [redB, greenB, blueB, alphaB] = fromHex(colorB);
+
+        if (redA !== redB) {
+            return redB - redA;
+        }
+
+        if (greenA !== greenB) {
+            return greenB - greenA;
+        }
+
+        if (blueA !== blueB) {
+            return blueB - blueA;
+        }
+
+        return alphaB - alphaA;
+    });
+
+export const sortNearest = (colorIterable) => {
     const colors = new Set(colorIterable);
     const variantScores = {};
 
