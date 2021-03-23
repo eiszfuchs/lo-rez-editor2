@@ -13,6 +13,7 @@
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
     import ProgressBar from '@/components/atoms/ProgressBar.svelte';
     import TextureEditor from '@/components/editors/Texture.svelte';
+    import ShaderEditor from '@/components/editors/Shader.svelte';
 
     const sortCollator = new Intl.Collator();
 
@@ -56,11 +57,54 @@
                     ) !== null
                 );
             },
+            check: ({ entryName }) =>
+                [
+                    !versions.has(entryName) ? 'version' : null,
+                    outdated(entryName) ? 'outdated' : null,
+                    fromFuture(entryName) ? 'fromFuture' : null,
+                    drafts.get(entryName, false) ? 'draft' : null,
+                ].filter((d) => d !== null),
             label: ({ entryName }) =>
                 entryName.replace(/^assets\/minecraft\/textures\//, ''),
             open: ({ label, zipEntry }) =>
                 openEditor({
                     ui: TextureEditor,
+                    label,
+                    zipEntry,
+                }),
+        },
+        {
+            test: ({ entryName: name }) => {
+                if (!name.endsWith('.png')) {
+                    return false;
+                }
+
+                if (name.includes('fire_0') || name.includes('fire_1')) {
+                    return true;
+                }
+
+                if (name.includes('block/water_')) {
+                    return true;
+                }
+
+                if (name.includes('block/lava_')) {
+                    return true;
+                }
+
+                return false;
+            },
+            check: ({ entryName }) =>
+                [
+                    !versions.has(entryName) ? 'version' : null,
+                    outdated(entryName) ? 'outdated' : null,
+                    fromFuture(entryName) ? 'fromFuture' : null,
+                    drafts.get(entryName, false) ? 'draft' : null,
+                ].filter((d) => d !== null),
+            label: ({ entryName }) =>
+                entryName.replace(/^assets\/minecraft\/textures\//, ''),
+            open: ({ label, zipEntry }) =>
+                openEditor({
+                    ui: ShaderEditor,
                     label,
                     zipEntry,
                 }),
@@ -91,13 +135,7 @@
                     if (capability.test(entry)) {
                         const label = capability.label(entry);
                         const filename = entry.entryName;
-
-                        const warnings = [
-                            !versions.has(filename) ? 'version' : null,
-                            outdated(filename) ? 'outdated' : null,
-                            fromFuture(filename) ? 'fromFuture' : null,
-                            drafts.get(filename, false) ? 'draft' : null,
-                        ].filter((d) => d !== null);
+                        const warnings = capability.check(entry);
 
                         return {
                             label,

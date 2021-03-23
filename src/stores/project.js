@@ -14,6 +14,8 @@ export const models = new ProjectFile('lo-rez/models.jsonl');
 
 export const palettes = new ProjectFile('lo-rez/palettes.jsonl');
 
+export const shaders = new ProjectFile('lo-rez/shaders.jsonl');
+
 export const textures = new ProjectFile('lo-rez/textures.jsonl');
 
 export const versions = new ProjectFile('lo-rez/versions.jsonl');

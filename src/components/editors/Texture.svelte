@@ -417,6 +417,7 @@
                     <div class="texture-parent">
                         <PickableImage
                             src={epPreviewSrc}
+                            base={8}
                             scale={24}
                             on:pick={onPickablePick}
                             on:hover={onPickableHover}

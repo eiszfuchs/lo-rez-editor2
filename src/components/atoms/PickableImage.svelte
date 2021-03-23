@@ -9,7 +9,7 @@
 
     let width = 0;
     let height = 0;
-    let frames = 0;
+    export let totalFrames = 0;
 
     let pick = () => null;
 
@@ -18,10 +18,10 @@
     function init() {
         extract(src, ({ width: w, height: h, getAt }) => {
             width = w;
-            height = w;
+            height = h;
             pick = getAt;
 
-            frames = (h / base) * (w / base);
+            totalFrames = (h / base) * (w / base);
         });
     }
 
@@ -49,10 +49,15 @@
 
     $: init(src);
 
+    $: displaySize = base * scale;
+
     $: wrapperStyle = [
-        `width: ${width * scale}px`,
-        `height: ${height * scale}px`,
-        `--frame-offset: ${frame * scale * height}px`,
+        `width: ${base * scale}px`,
+        `height: ${base * scale}px`,
+        `--frame-right-offset: ${
+            Math.floor((frame * displaySize) / (height * scale)) * displaySize
+        }px`,
+        `--frame-bottom-offset: ${(frame * displaySize) % (height * scale)}px`,
     ]
         .filter((d) => !!d)
         .join(';');
@@ -62,6 +67,8 @@
     <img
         alt=""
         {src}
+        width={width * scale}
+        height={height * scale}
         on:mousemove={overImage}
         on:mouseleave={leaveImage}
         on:click={clickImage}
@@ -78,10 +85,9 @@
     }
 
     img {
-        width: 100%;
-
         position: relative;
-        bottom: var(--frame-offset);
+        right: var(--frame-right-offset, 0);
+        bottom: var(--frame-bottom-offset, 0);
 
         image-rendering: pixelated;
         background: var(--tex-transparent-background);

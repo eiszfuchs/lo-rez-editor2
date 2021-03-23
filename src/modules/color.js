@@ -1,6 +1,6 @@
 const { abs } = Math;
 
-const fromHex = (color) =>
+export const fromHex = (color) =>
     color
         .match(/#(.{2})(.{2})(.{2})(.{2})/)
         .slice(1)
