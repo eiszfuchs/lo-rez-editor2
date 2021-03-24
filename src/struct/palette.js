@@ -1,5 +1,9 @@
 import { diff, sortNearest } from '@/modules/color.js';
 
+const MAX_DIFF = 12;
+const MAX_GROUP_DIFF = 16;
+const MAX_NEAR_WEIGHT = 8;
+
 export function Palette(colors = []) {
     this.subscriptions = new Set();
     this.colorWeights = {};
@@ -56,7 +60,7 @@ Palette.prototype.cleanupNearest = function () {
 
         const weightA = this.colorWeights[colorA];
 
-        if (weightA > 8) {
+        if (weightA > MAX_NEAR_WEIGHT) {
             continue;
         }
 
@@ -66,7 +70,7 @@ Palette.prototype.cleanupNearest = function () {
             }
 
             const weightB = this.colorWeights[colorB];
-            if (weightB <= 8) {
+            if (weightB <= MAX_NEAR_WEIGHT) {
                 continue;
             }
 
@@ -77,7 +81,7 @@ Palette.prototype.cleanupNearest = function () {
             }
         }
 
-        if (minDiff >= 12) {
+        if (minDiff > MAX_DIFF) {
             continue;
         }
 
@@ -98,7 +102,7 @@ Palette.prototype.cleanupMedian = function () {
         }
 
         const difference = diff(groupStart, color);
-        if (difference > 16) {
+        if (difference > MAX_GROUP_DIFF) {
             if (group.length > 1) {
                 const median = group[Math.floor(group.length / 2)];
 
@@ -113,6 +117,50 @@ Palette.prototype.cleanupMedian = function () {
             group.push(color);
         }
     }
+};
+
+Palette.prototype.cleanupBruteForce = function (targetWeight = 1) {
+    if (targetWeight > MAX_NEAR_WEIGHT) {
+        console.debug('Cannot brute-force cleanup, target weight is too high');
+
+        return;
+    }
+
+    if (this.colors.size < 28) {
+        console.debug({ targetWeight });
+        console.debug('Will not brute-force cleanup for less than 28 colors');
+
+        return;
+    }
+
+    for (let colorA of this.colors) {
+        const weightA = this.colorWeights[colorA];
+
+        if (weightA <= targetWeight) {
+            let minDiff = Number.MAX_SAFE_INTEGER;
+            let sibling = null;
+
+            for (let colorB of this.colors) {
+                if (colorA === colorB) {
+                    continue;
+                }
+
+                const weightB = this.colorWeights[colorB];
+                const difference = diff(colorA, colorB);
+
+                if (weightB >= weightA && difference < minDiff) {
+                    sibling = colorB;
+                    minDiff = difference;
+                }
+            }
+
+            if (minDiff <= MAX_DIFF && sibling) {
+                this.replaceColor(colorA, sibling);
+            }
+        }
+    }
+
+    return this.cleanupBruteForce(targetWeight + 1);
 };
 
 Palette.prototype.cleanup = function () {
@@ -130,9 +178,15 @@ Palette.prototype.cleanup = function () {
         (color) => this.colorWeights[color] <= 1
     );
 
-    if (uniqueColors.length > 24) {
+    if (this.colors.size > 40) {
         console.warn(
-            'More than 24 colors are used only once, forcing median cleanup'
+            'More than 40 colors in the palette, doing brute-force cleanup'
+        );
+
+        this.cleanupBruteForce();
+    } else if (uniqueColors.length > 16) {
+        console.warn(
+            'More than 16 colors are used only once, forcing median cleanup'
         );
 
         this.cleanupMedian();

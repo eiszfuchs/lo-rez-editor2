@@ -90,6 +90,8 @@
     $: epPreviewSrc = `../lo-rez/${entryName}`;
 
     function init() {
+        console.info(`Opening texture editor for ${entryName}`);
+
         changes = {};
         fixOptions = [];
 
