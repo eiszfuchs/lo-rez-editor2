@@ -75,6 +75,7 @@
 
     let texturePalette = null;
     let texture = [];
+    let textureOverride = null;
     let textureTool = TOOL_PEN;
 
     const dispatch = createEventDispatcher();
@@ -258,17 +259,58 @@
 
     let highlightPalette = [];
 
-    function onPickablePick({ detail: color }) {
+    function onPickablePick({ detail: { x, y, color } }) {
         try {
-            return texturePalette.setColor(color);
+            if (textureTool === TOOL_PICK) {
+                texture = textureOverride;
+                textureOverride = null;
+            } else {
+                return texturePalette.setColor(color);
+            }
         } catch (reason) {
             return;
         }
     }
 
-    function onPickableHover({ detail: color }) {
+    function onPickableHover({ detail: { x = 0, y = 0, pick, color } }) {
         highlightPalette = [];
-        if (color) {
+        textureOverride = null;
+
+        if (textureTool === TOOL_PICK) {
+            if (!pick) {
+                return;
+            }
+
+            // This feature is pretty hacked together and I don't like how it turned out.
+            // But it may be useful, so I decided to not remove it.
+            const height = texture?.length || 0;
+            const width = texture[0]?.length || 0;
+            const defaultColor = texturePalette.getDefault();
+
+            textureOverride = empty(width, height, defaultColor);
+
+            for (let ty = 0; ty < height; ty += 1) {
+                for (let tx = 0; tx < width; tx += 1) {
+                    const pickX = (x + tx) % (width * 2);
+                    const pickY = (y + ty) % (height * 2);
+                    const color = pick(pickX, pickY);
+
+                    let index = defaultColor;
+
+                    try {
+                        index = texturePalette.findIndex(color, 4);
+                    } catch (reason) {}
+                    
+                    textureOverride[ty][tx] = index;
+                }
+            }
+
+            textureOverride = textureOverride;
+        } else {
+            if (!color) {
+                return;
+            }
+
             highlightPalette = [color];
         }
     }
@@ -409,6 +451,7 @@
                                 {texture}
                                 tool={textureTool}
                                 palette={texturePalette}
+                                override={textureOverride}
                                 on:change={() => (texture = texture)}
                             />
                         </div>
@@ -442,7 +485,6 @@
                 />
 
                 <Button
-                    disabled
                     kind="ghost"
                     isSelected={textureTool === TOOL_PICK}
                     on:click={() => (textureTool = TOOL_PICK)}

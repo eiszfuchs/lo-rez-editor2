@@ -31,20 +31,32 @@
     ];
 
     function leaveImage() {
-        dispatch('hover', null);
+        dispatch('hover', {
+            color: null,
+        });
     }
 
     function overImage(event) {
         const [pixelX, pixelY] = posFromEvent(event);
 
-        dispatch('hover', pick(pixelX, pixelY));
         event.preventDefault();
+        dispatch('hover', {
+            pick,
+            x: pixelX,
+            y: pixelY,
+            color: pick(pixelX, pixelY),
+        });
     }
 
     function clickImage(event) {
         const [pixelX, pixelY] = posFromEvent(event);
 
-        dispatch('pick', pick(pixelX, pixelY));
+        dispatch('pick', {
+            pick,
+            x: pixelX,
+            y: pixelY,
+            color: pick(pixelX, pixelY),
+        });
     }
 
     $: init(src);

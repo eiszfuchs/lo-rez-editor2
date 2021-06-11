@@ -15,6 +15,7 @@
 
     export let texture;
     export let palette;
+    export let override;
     export let tool = TOOL_PEN;
 
     const dispatch = createEventDispatcher();
@@ -35,8 +36,8 @@
         return colors[texture[y][x]] || null;
     }
 
-    function previewAt(x, y) {
-        return colors[preview[y][x]] || null;
+    function previewAt(x, y, tex) {
+        return colors[tex[y][x]] || null;
     }
 
     function clear(container) {
@@ -224,8 +225,11 @@
             {#each Array(width) as _, x}
                 <div
                     class="pixel"
-                    style="background-color: {previewAt(x, y, preview) ??
-                        textureAt(x, y, texture)}"
+                    style="background-color: {previewAt(
+                        x,
+                        y,
+                        override ?? preview
+                    ) ?? textureAt(x, y, texture)}"
                 />
             {/each}
         </div>
