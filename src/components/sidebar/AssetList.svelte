@@ -2,13 +2,17 @@
     import { cachedVersions, selectedVersion } from '@/stores/mc-versions.js';
     import { openEditor } from '@/stores/editors.js';
     import { drafts, versions } from '@/stores/project.js';
+    import { filterWarnings } from '@/stores/search.js';
     import { lt } from '@/modules/version.js';
 
-    import { TextInput } from 'carbon-components-svelte';
-    import WarningAltFilled16 from 'carbon-icons-svelte/lib/WarningAltFilled16';
-    import ArrowDown16 from 'carbon-icons-svelte/lib/ArrowDown16';
-    import ArrowUp16 from 'carbon-icons-svelte/lib/ArrowUp16';
-    import IncompleteWarning16 from 'carbon-icons-svelte/lib/IncompleteWarning16';
+    import {
+        Button,
+        Checkbox,
+        OverflowMenu,
+        Search,
+        TooltipIcon,
+    } from 'carbon-components-svelte';
+    import FilterEdit16 from 'carbon-icons-svelte/lib/FilterEdit16';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
     import ProgressBar from '@/components/atoms/ProgressBar.svelte';
@@ -138,6 +142,7 @@
                         const warnings = capability.check(entry);
 
                         return {
+                            hide: false,
                             label,
                             warnings,
                             filename,
@@ -156,6 +161,39 @@
             .sort((a, b) => sortCollator.compare(a.label, b.label));
     }
 
+    function filterList(e) {
+        let textFilter = '';
+
+        if (e.target && e.target.type === 'text') {
+            textFilter = e.target.value.trim();
+        } else {
+            textFilter = filterSearch;
+        }
+
+        zipEntries = zipEntries.map((entry) => {
+            entry.hide = false;
+
+            if (entry.warnings.length > 0) {
+                const entryWarnings = [];
+
+                for (const warning of entry.warnings) {
+                    entryWarnings.push({
+                        id: warning,
+                        showEntries: $filterWarnings.find(
+                            (w) => w.id === warning
+                        ).showEntries,
+                    });
+                }
+
+                entry.hide = !entryWarnings.filter((w) => w.showEntries).length;
+            }
+
+            entry.hide = entry.hide || !entry.label.includes(textFilter);
+
+            return entry;
+        });
+    }
+
     $: makeList($selectedVersion);
     $: completedEntries = zipEntries.filter(
         ({ warnings }) => warnings.length === 0
@@ -171,6 +209,20 @@
         {#if $selectedVersion}
             ({$selectedVersion})
         {/if}
+
+        <div class="warnings-legend">
+            <span>Legend:</span>
+
+            {#each $filterWarnings as warning}
+                <TooltipIcon
+                    tooltipText={warning.label}
+                    align="end"
+                    style="cursor: default;"
+                >
+                    <svelte:component this={warning.iconComponent} />
+                </TooltipIcon>
+            {/each}
+        </div>
     </SidebarLabel>
 
     <!-- This is the actual list -->
@@ -179,20 +231,25 @@
             <li
                 class="entry"
                 class:has-warning={entry.warnings.length > 0}
-                class:hidden={!entry.label.includes(filterSearch)}
+                class:hidden={entry.hide}
                 on:click={entry.onClick}
             >
                 <span>{entry.label}</span>
 
-                {#if entry.warnings.includes('version')}
-                    <WarningAltFilled16 />
-                {:else if entry.warnings.includes('outdated')}
-                    <ArrowDown16 />
-                {:else if entry.warnings.includes('fromFuture')}
-                    <ArrowUp16 />
-                {:else if entry.warnings.includes('draft')}
-                    <IncompleteWarning16 />
-                {/if}
+                <span class="warnings">
+                    {#each $filterWarnings as warning}
+                        {#if entry.warnings.includes(warning.id)}
+                            <span
+                                class="warning-icon"
+                                class:disabled={!warning.showEntries}
+                            >
+                                <svelte:component
+                                    this={warning.iconComponent}
+                                />
+                            </span>
+                        {/if}
+                    {/each}
+                </span>
             </li>
         {/each}
     </ul>
@@ -202,15 +259,54 @@
     </div>
 
     <div class="form">
-        <TextInput
-            inline
+        <div class="search-input">
+            <Search
+                light
+                size="sm"
+                placeholder="Filter by name..."
+                disabled={!$selectedVersion}
+                autocomplete="on"
+                bind:value={filterSearch}
+                on:clear={filterList}
+                on:input={filterList}
+            />
+        </div>
+
+        <!--
+            overflow menu is cool, but is always an UL.
+            original overflow menu items (LI) are ugly and unflexible,
+            as they only really support plain text in them.
+        -->
+        <OverflowMenu
+            id="filter-warnings"
+            flipped
             light
             size="sm"
-            labelText="Search"
-            placeholder="Filter by name..."
-            disabled={!$selectedVersion}
-            bind:value={filterSearch}
-        />
+            direction="top"
+        >
+            <div slot="menu">
+                <Button
+                    size="small"
+                    kind="ghost"
+                    hasIconOnly="true"
+                    tooltipPosition="top"
+                    tooltipAlignment="end"
+                    iconDescription="Filter by warnings"
+                    disabled={!$selectedVersion}
+                    icon={FilterEdit16}
+                />
+            </div>
+
+            {#each $filterWarnings as _, i}
+                <li class="filter-menu-item bx--overflow-menu-options__option">
+                    <Checkbox
+                        labelText={$filterWarnings[i].label}
+                        bind:checked={$filterWarnings[i].showEntries}
+                        on:check={filterList}
+                    />
+                </li>
+            {/each}
+        </OverflowMenu>
     </div>
 </div>
 
@@ -240,13 +336,37 @@
     }
 
     .motivation {
-        flex: 0 1 auto;
         margin-top: var(--cds-spacing-02);
     }
 
     .form {
-        flex: 0 1 auto;
+        display: flex;
         margin-top: var(--cds-spacing-02);
+    }
+
+    .search-input {
+        flex-grow: 1;
+        width: auto;
+    }
+
+    .warnings-legend {
+        display: inline-flex;
+        float: right;
+
+        span:first-child {
+            margin-right: 1ch;
+        }
+    }
+
+    .filter-menu-item {
+        color: var(--cds-text-01);
+        padding: 0;
+        margin: 0;
+
+        // :global(label) {
+        //     width: 100%;
+        //     padding: 0 var(--cds-spacing-02);
+        // }
     }
 
     .entry {
@@ -273,6 +393,7 @@
         }
 
         > span {
+            width: 100%;
             flex: 1 1 auto;
 
             overflow: hidden;
@@ -283,6 +404,20 @@
             font-weight: var(--cds-label-01-font-weight);
             line-height: var(--cds-label-01-line-height);
             letter-spacing: var(--cds-label-01-letter-spacing);
+        }
+
+        > .warnings {
+            min-width: fit-content;
+            width: 0;
+
+            line-height: 0;
+
+            .warning-icon {
+                &.disabled {
+                    color: var(--cds-interactive-02);
+                    opacity: 0.5;
+                }
+            }
         }
     }
 </style>
