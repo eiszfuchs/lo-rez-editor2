@@ -314,7 +314,6 @@
                 size="sm"
                 placeholder="Filter by name..."
                 disabled={!$selectedVersion}
-                autocomplete="on"
                 bind:value={filterSearch}
             />
         </div>
@@ -347,11 +346,12 @@
     }
 
     .motivation {
+        flex: 0 1 auto;
         margin-top: var(--cds-spacing-02);
     }
 
     .form {
-        display: flex;
+        flex: 0 1 auto;
         margin-top: var(--cds-spacing-02);
     }
 
@@ -398,7 +398,6 @@
         }
 
         > span {
-            width: 100%;
             flex: 1 1 auto;
 
             overflow: hidden;
@@ -412,9 +411,7 @@
         }
 
         > .warnings {
-            min-width: fit-content;
-            width: 0;
-
+            flex: none;
             line-height: 0;
         }
     }
