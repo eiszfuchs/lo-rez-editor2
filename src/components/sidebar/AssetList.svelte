@@ -2,27 +2,54 @@
     import { cachedVersions, selectedVersion } from '@/stores/mc-versions.js';
     import { openEditor } from '@/stores/editors.js';
     import { drafts, versions } from '@/stores/project.js';
-    import { filterWarnings } from '@/stores/search.js';
     import { lt } from '@/modules/version.js';
-
-    import {
-        Button,
-        Checkbox,
-        OverflowMenu,
-        Search,
-        TooltipIcon,
-    } from 'carbon-components-svelte';
-    import FilterEdit16 from 'carbon-icons-svelte/lib/FilterEdit16';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
     import ProgressBar from '@/components/atoms/ProgressBar.svelte';
     import TextureEditor from '@/components/editors/Texture.svelte';
     import ShaderEditor from '@/components/editors/Shader.svelte';
 
+    import { Search, TooltipIcon } from 'carbon-components-svelte';
+    import CheckmarkFilled16 from 'carbon-icons-svelte/lib/CheckmarkFilled16';
+    import WarningAltFilled16 from 'carbon-icons-svelte/lib/WarningAltFilled16';
+    import ArrowDown16 from 'carbon-icons-svelte/lib/ArrowDown16';
+    import ArrowUp16 from 'carbon-icons-svelte/lib/ArrowUp16';
+    import IncompleteWarning16 from 'carbon-icons-svelte/lib/IncompleteWarning16';
+
     const sortCollator = new Intl.Collator();
 
     let zipEntries = [];
+
     let filterSearch = '';
+    let filterWarnings = new Set();
+
+    const warnings = [
+        {
+            id: 'none',
+            label: 'Done',
+            iconComponent: CheckmarkFilled16,
+        },
+        {
+            id: 'version',
+            label: 'To do',
+            iconComponent: WarningAltFilled16,
+        },
+        {
+            id: 'outdated',
+            label: 'Outdated',
+            iconComponent: ArrowDown16,
+        },
+        {
+            id: 'fromFuture',
+            label: 'Future',
+            iconComponent: ArrowUp16,
+        },
+        {
+            id: 'draft',
+            label: 'Draft',
+            iconComponent: IncompleteWarning16,
+        },
+    ];
 
     const capabilities = [
         {
@@ -142,7 +169,6 @@
                         const warnings = capability.check(entry);
 
                         return {
-                            hide: false,
                             label,
                             warnings,
                             filename,
@@ -161,37 +187,58 @@
             .sort((a, b) => sortCollator.compare(a.label, b.label));
     }
 
-    function filterList(e) {
-        let textFilter = '';
+    function entryFilter(entry) {
+        return [
+            // search input filter
+            !entry.label.includes(filterSearch),
+            // "done" filter
+            !entry.warnings.length && filterWarnings.has('none'),
+            // warnings filter
+            entry.warnings.some((w) => filterWarnings.has(w)),
+        ].filter((active) => active).length;
+    }
 
-        if (e.target && e.target.type === 'text') {
-            textFilter = e.target.value.trim();
-        } else {
-            textFilter = filterSearch;
+    function toggleFilterWarnings(e) {
+        const warningIdExists = (match) =>
+            warnings.filter(({ id }) => id === match).length;
+
+        const emergencyBreak = (tries) => {
+            if (tries >= 5) {
+                throw TypeError(
+                    `Couldn't find a valid element after ${tries} tries.`
+                );
+            }
+        };
+
+        let filterId = '';
+        let element = e.target;
+        let button = element;
+        let tries = 0;
+
+        // grab the warning id from wherever it might hide
+        while (!warningIdExists(element.id || '') && !emergencyBreak(tries)) {
+            element = element.parentElement;
         }
 
-        zipEntries = zipEntries.map((entry) => {
-            entry.hide = false;
+        filterId = element.id || element.getAttribute('aria-describedby');
 
-            if (entry.warnings.length > 0) {
-                const entryWarnings = [];
+        // find the button to remove ugly active/focus state when clicked.
+        // otherwise the tooltip will stay open after clicking.
+        tries = 0;
 
-                for (const warning of entry.warnings) {
-                    entryWarnings.push({
-                        id: warning,
-                        showEntries: $filterWarnings.find(
-                            (w) => w.id === warning
-                        ).showEntries,
-                    });
-                }
+        while (button.localName !== 'button' && !emergencyBreak(tries)) {
+            button = button.parentElement;
+        }
 
-                entry.hide = !entryWarnings.filter((w) => w.showEntries).length;
-            }
+        if (button.localName === 'button') {
+            button.blur();
+        }
 
-            entry.hide = entry.hide || !entry.label.includes(textFilter);
+        if (filterWarnings.size === filterWarnings.add(filterId).size) {
+            filterWarnings.delete(filterId);
+        }
 
-            return entry;
-        });
+        filterWarnings = filterWarnings;
     }
 
     $: makeList($selectedVersion);
@@ -208,21 +255,21 @@
 
         {#if $selectedVersion}
             ({$selectedVersion})
+
+            <span class="legend">
+                {#each warnings as warning}
+                    <TooltipIcon tooltipText={warning.label} align="end">
+                        <span
+                            id={warning.id}
+                            class:active={filterWarnings.has(warning.id)}
+                            on:click={toggleFilterWarnings}
+                        >
+                            <svelte:component this={warning.iconComponent} />
+                        </span>
+                    </TooltipIcon>
+                {/each}
+            </span>
         {/if}
-
-        <div class="warnings-legend">
-            <span>Legend:</span>
-
-            {#each $filterWarnings as warning}
-                <TooltipIcon
-                    tooltipText={warning.label}
-                    align="end"
-                    style="cursor: default;"
-                >
-                    <svelte:component this={warning.iconComponent} />
-                </TooltipIcon>
-            {/each}
-        </div>
     </SidebarLabel>
 
     <!-- This is the actual list -->
@@ -231,25 +278,26 @@
             <li
                 class="entry"
                 class:has-warning={entry.warnings.length > 0}
-                class:hidden={entry.hide}
+                class:hidden={entryFilter(entry, [
+                    // trigger reactivity :(
+                    filterSearch,
+                    filterWarnings,
+                ])}
                 on:click={entry.onClick}
             >
                 <span>{entry.label}</span>
 
-                <span class="warnings">
-                    {#each $filterWarnings as warning}
-                        {#if entry.warnings.includes(warning.id)}
-                            <span
-                                class="warning-icon"
-                                class:disabled={!warning.showEntries}
-                            >
-                                <svelte:component
-                                    this={warning.iconComponent}
-                                />
-                            </span>
-                        {/if}
-                    {/each}
-                </span>
+                {#if entry.warnings.length > 0}
+                    <span class="warnings">
+                        {#each warnings as { id, iconComponent }}
+                            {#if entry.warnings.includes(id)}
+                                <span class:active={filterWarnings.has(id)}>
+                                    <svelte:component this={iconComponent} />
+                                </span>
+                            {/if}
+                        {/each}
+                    </span>
+                {/if}
             </li>
         {/each}
     </ul>
@@ -267,46 +315,8 @@
                 disabled={!$selectedVersion}
                 autocomplete="on"
                 bind:value={filterSearch}
-                on:clear={filterList}
-                on:input={filterList}
             />
         </div>
-
-        <!--
-            overflow menu is cool, but is always an UL.
-            original overflow menu items (LI) are ugly and unflexible,
-            as they only really support plain text in them.
-        -->
-        <OverflowMenu
-            id="filter-warnings"
-            flipped
-            light
-            size="sm"
-            direction="top"
-        >
-            <div slot="menu">
-                <Button
-                    size="small"
-                    kind="ghost"
-                    hasIconOnly="true"
-                    tooltipPosition="top"
-                    tooltipAlignment="end"
-                    iconDescription="Filter by warnings"
-                    disabled={!$selectedVersion}
-                    icon={FilterEdit16}
-                />
-            </div>
-
-            {#each $filterWarnings as _, i}
-                <li class="filter-menu-item bx--overflow-menu-options__option">
-                    <Checkbox
-                        labelText={$filterWarnings[i].label}
-                        bind:checked={$filterWarnings[i].showEntries}
-                        on:check={filterList}
-                    />
-                </li>
-            {/each}
-        </OverflowMenu>
     </div>
 </div>
 
@@ -349,24 +359,18 @@
         width: auto;
     }
 
-    .warnings-legend {
+    .legend {
         display: inline-flex;
+        gap: var(--cds-spacing-02);
         float: right;
 
-        span:first-child {
-            margin-right: 1ch;
+        margin-right: var(--cds-spacing-04);
+
+        span {
+            &.active {
+                --cds-icon-secondary: var(--cds-text-error);
+            }
         }
-    }
-
-    .filter-menu-item {
-        color: var(--cds-text-01);
-        padding: 0;
-        margin: 0;
-
-        // :global(label) {
-        //     width: 100%;
-        //     padding: 0 var(--cds-spacing-02);
-        // }
     }
 
     .entry {
@@ -411,13 +415,6 @@
             width: 0;
 
             line-height: 0;
-
-            .warning-icon {
-                &.disabled {
-                    color: var(--cds-interactive-02);
-                    opacity: 0.5;
-                }
-            }
         }
     }
 </style>
