@@ -245,6 +245,7 @@
     $: completedEntries = zipEntries.filter(
         ({ warnings }) => warnings.length === 0
     ).length;
+    $: filterSearch = filterSearch.trim();
 
     versions.subscribe(makeList);
 </script>
