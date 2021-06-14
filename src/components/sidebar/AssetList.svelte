@@ -4,17 +4,17 @@
     import { drafts, versions } from '@/stores/project.js';
     import { lt } from '@/modules/version.js';
 
-    import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
-    import ProgressBar from '@/components/atoms/ProgressBar.svelte';
-    import TextureEditor from '@/components/editors/Texture.svelte';
-    import ShaderEditor from '@/components/editors/Shader.svelte';
-
     import { Search, TooltipIcon } from 'carbon-components-svelte';
     import CheckmarkFilled16 from 'carbon-icons-svelte/lib/CheckmarkFilled16';
     import WarningAltFilled16 from 'carbon-icons-svelte/lib/WarningAltFilled16';
     import ArrowDown16 from 'carbon-icons-svelte/lib/ArrowDown16';
     import ArrowUp16 from 'carbon-icons-svelte/lib/ArrowUp16';
     import IncompleteWarning16 from 'carbon-icons-svelte/lib/IncompleteWarning16';
+
+    import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
+    import ProgressBar from '@/components/atoms/ProgressBar.svelte';
+    import TextureEditor from '@/components/editors/Texture.svelte';
+    import ShaderEditor from '@/components/editors/Shader.svelte';
 
     const sortCollator = new Intl.Collator();
 
