@@ -4,7 +4,8 @@
     import { drafts, versions } from '@/stores/project.js';
     import { lt } from '@/modules/version.js';
 
-    import { TextInput } from 'carbon-components-svelte';
+    import { Search, TooltipIcon } from 'carbon-components-svelte';
+    import CheckmarkFilled16 from 'carbon-icons-svelte/lib/CheckmarkFilled16';
     import WarningAltFilled16 from 'carbon-icons-svelte/lib/WarningAltFilled16';
     import ArrowDown16 from 'carbon-icons-svelte/lib/ArrowDown16';
     import ArrowUp16 from 'carbon-icons-svelte/lib/ArrowUp16';
@@ -18,7 +19,37 @@
     const sortCollator = new Intl.Collator();
 
     let zipEntries = [];
+
     let filterSearch = '';
+    let filterWarnings = new Set();
+
+    const warnings = [
+        {
+            id: 'none',
+            label: 'Done',
+            iconComponent: CheckmarkFilled16,
+        },
+        {
+            id: 'version',
+            label: 'To do',
+            iconComponent: WarningAltFilled16,
+        },
+        {
+            id: 'outdated',
+            label: 'Outdated',
+            iconComponent: ArrowDown16,
+        },
+        {
+            id: 'fromFuture',
+            label: 'Future',
+            iconComponent: ArrowUp16,
+        },
+        {
+            id: 'draft',
+            label: 'Draft',
+            iconComponent: IncompleteWarning16,
+        },
+    ];
 
     const capabilities = [
         {
@@ -121,6 +152,7 @@
 
     function makeList() {
         zipEntries = [];
+        filterWarnings.clear();
 
         if (!$selectedVersion) {
             return;
@@ -156,10 +188,66 @@
             .sort((a, b) => sortCollator.compare(a.label, b.label));
     }
 
+    function entryFilter(entry) {
+        return [
+            // search input filter
+            !entry.label.includes(filterSearch),
+            // "done" filter
+            !entry.warnings.length && filterWarnings.has('none'),
+            // warnings filter
+            entry.warnings.some((w) => filterWarnings.has(w)),
+        ].filter((active) => active).length;
+    }
+
+    function toggleFilterWarnings(e) {
+        const getFilterId = (element) =>
+            element.id || element.getAttribute('aria-describedby') || '';
+        const emergencyBreak = (tries) => {
+            if (tries >= 5) {
+                throw TypeError(
+                    `Couldn't find a valid element after ${tries} tries.`
+                );
+            }
+        };
+
+        let element = e.target;
+        let filterId = getFilterId(element);
+        let button = element;
+        let tries = 0;
+
+        // grab the warning id from wherever it might hide
+        while (
+            !warnings.find((w) => w.id === filterId) &&
+            !emergencyBreak(tries)
+        ) {
+            element = element.parentElement;
+            filterId = getFilterId(element);
+        }
+
+        // find the button to remove ugly active/focus state when clicked.
+        // otherwise the tooltip will stay open after clicking.
+        tries = 0;
+
+        while (button.localName !== 'button' && !emergencyBreak(tries)) {
+            button = button.parentElement;
+        }
+
+        if (button.localName === 'button') {
+            button.blur();
+        }
+
+        if (filterWarnings.size === filterWarnings.add(filterId).size) {
+            filterWarnings.delete(filterId);
+        }
+
+        filterWarnings = filterWarnings;
+    }
+
     $: makeList($selectedVersion);
     $: completedEntries = zipEntries.filter(
         ({ warnings }) => warnings.length === 0
     ).length;
+    $: filterSearch = filterSearch.trim();
 
     versions.subscribe(makeList);
 </script>
@@ -170,6 +258,21 @@
 
         {#if $selectedVersion}
             ({$selectedVersion})
+
+            <span class="legend">
+                {#each warnings as warning}
+                    <TooltipIcon tooltipText={warning.label} align="end">
+                        <span
+                            id={warning.id}
+                            class="legend-icon"
+                            class:active={filterWarnings.has(warning.id)}
+                            on:click={toggleFilterWarnings}
+                        >
+                            <svelte:component this={warning.iconComponent} />
+                        </span>
+                    </TooltipIcon>
+                {/each}
+            </span>
         {/if}
     </SidebarLabel>
 
@@ -179,19 +282,25 @@
             <li
                 class="entry"
                 class:has-warning={entry.warnings.length > 0}
-                class:hidden={!entry.label.includes(filterSearch)}
+                class:hidden={entryFilter(entry, [
+                    // trigger reactivity :(
+                    filterSearch,
+                    filterWarnings,
+                ])}
                 on:click={entry.onClick}
             >
                 <span>{entry.label}</span>
 
-                {#if entry.warnings.includes('version')}
-                    <WarningAltFilled16 />
-                {:else if entry.warnings.includes('outdated')}
-                    <ArrowDown16 />
-                {:else if entry.warnings.includes('fromFuture')}
-                    <ArrowUp16 />
-                {:else if entry.warnings.includes('draft')}
-                    <IncompleteWarning16 />
+                {#if entry.warnings.length > 0}
+                    <span class="warnings">
+                        {#each warnings as { id, iconComponent }}
+                            {#if entry.warnings.includes(id)}
+                                <span class:active={filterWarnings.has(id)}>
+                                    <svelte:component this={iconComponent} />
+                                </span>
+                            {/if}
+                        {/each}
+                    </span>
                 {/if}
             </li>
         {/each}
@@ -202,15 +311,15 @@
     </div>
 
     <div class="form">
-        <TextInput
-            inline
-            light
-            size="sm"
-            labelText="Search"
-            placeholder="Filter by name..."
-            disabled={!$selectedVersion}
-            bind:value={filterSearch}
-        />
+        <div class="search-input">
+            <Search
+                light
+                size="sm"
+                placeholder="Filter by name..."
+                disabled={!$selectedVersion}
+                bind:value={filterSearch}
+            />
+        </div>
     </div>
 </div>
 
@@ -249,6 +358,36 @@
         margin-top: var(--cds-spacing-02);
     }
 
+    .search-input {
+        flex-grow: 1;
+        width: auto;
+    }
+
+    .legend {
+        user-select: none;
+
+        display: inline-flex;
+        gap: var(--cds-spacing-02);
+        float: right;
+
+        margin-right: var(--cds-spacing-04);
+
+        .legend-icon {
+            line-height: 0;
+            padding-bottom: var(--cds-spacing-01);
+            border-bottom: 1px dashed transparent;
+
+            &.active {
+                --cds-icon-secondary: var(--cds-text-error);
+                border-bottom-color: var(--cds-icon-secondary);
+
+                &[id='none'] {
+                    --cds-icon-secondary: var(--cds-interactive-02);
+                }
+            }
+        }
+    }
+
     .entry {
         display: flex;
         flex-direction: row;
@@ -283,6 +422,11 @@
             font-weight: var(--cds-label-01-font-weight);
             line-height: var(--cds-label-01-line-height);
             letter-spacing: var(--cds-label-01-letter-spacing);
+        }
+
+        > .warnings {
+            flex: none;
+            line-height: 0;
         }
     }
 </style>
