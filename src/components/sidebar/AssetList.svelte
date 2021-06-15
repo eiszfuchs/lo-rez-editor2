@@ -199,9 +199,8 @@
     }
 
     function toggleFilterWarnings(e) {
-        const warningIdExists = (match) =>
-            warnings.filter(({ id }) => id === match).length;
-
+        const getFilterId = (element) =>
+            element.id || element.getAttribute('aria-describedby') || '';
         const emergencyBreak = (tries) => {
             if (tries >= 5) {
                 throw TypeError(
@@ -210,17 +209,19 @@
             }
         };
 
-        let filterId = '';
         let element = e.target;
+        let filterId = getFilterId(element);
         let button = element;
         let tries = 0;
 
         // grab the warning id from wherever it might hide
-        while (!warningIdExists(element.id || '') && !emergencyBreak(tries)) {
+        while (
+            !warnings.find((w) => w.id === filterId) &&
+            !emergencyBreak(tries)
+        ) {
             element = element.parentElement;
+            filterId = getFilterId(element);
         }
-
-        filterId = element.id || element.getAttribute('aria-describedby');
 
         // find the button to remove ugly active/focus state when clicked.
         // otherwise the tooltip will stay open after clicking.
