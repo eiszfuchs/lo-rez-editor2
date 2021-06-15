@@ -152,6 +152,7 @@
 
     function makeList() {
         zipEntries = [];
+        filterWarnings.clear();
 
         if (!$selectedVersion) {
             return;
