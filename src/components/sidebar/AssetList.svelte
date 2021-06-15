@@ -1,6 +1,7 @@
 <script>
     import { cachedVersions, selectedVersion } from '@/stores/mc-versions.js';
     import { openEditor } from '@/stores/editors.js';
+    import { activeTextureTool } from '@/stores/tools.js';
     import { drafts, versions } from '@/stores/project.js';
     import { lt } from '@/modules/version.js';
 
@@ -66,12 +67,14 @@
                 ].filter((d) => d !== null),
             label: ({ entryName }) =>
                 entryName.replace(/^assets\/minecraft\/textures\//, ''),
-            open: ({ label, zipEntry }) =>
+            open: ({ label, zipEntry }) => {
                 openEditor({
                     ui: TextureEditor,
                     label,
                     zipEntry,
-                }),
+                });
+                activeTextureTool.init();
+            },
         },
         {
             test: ({ entryName: name }) => {
