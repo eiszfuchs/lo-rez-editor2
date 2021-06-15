@@ -1,5 +1,14 @@
 <script>
     import { createEventDispatcher } from 'svelte';
+
+    import {
+        activeTextureTool,
+        TOOL_PEN,
+        TOOL_FILL,
+        TOOL_PICK,
+        TOOL_REPLACE,
+    } from '@/stores/tools.js';
+
     import { extract } from '@/modules/extractor.js';
 
     export let src;
@@ -57,6 +66,8 @@
             y: pixelY,
             color: pick(pixelX, pixelY),
         });
+
+        activeTextureTool.set(TOOL_PEN, [TOOL_FILL, TOOL_PICK, TOOL_REPLACE]);
     }
 
     $: init(src);

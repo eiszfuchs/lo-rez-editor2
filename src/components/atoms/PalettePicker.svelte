@@ -1,6 +1,13 @@
 <script>
     import { onDestroy } from 'svelte';
 
+    import {
+        activeTextureTool,
+        TOOL_PEN,
+        TOOL_FILL,
+        TOOL_REPLACE,
+    } from '@/stores/tools.js';
+
     import { sortNearest } from '@/modules/color.js';
 
     export let palette;
@@ -17,6 +24,8 @@
 
     function activate(color) {
         palette.setColor(color);
+
+        activeTextureTool.set(TOOL_PEN, [TOOL_FILL, TOOL_REPLACE]);
     }
 
     $: if (palette) {
