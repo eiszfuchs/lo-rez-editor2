@@ -263,6 +263,7 @@
                     <TooltipIcon tooltipText={warning.label} align="end">
                         <span
                             id={warning.id}
+                            class="legend-icon"
                             class:active={filterWarnings.has(warning.id)}
                             on:click={toggleFilterWarnings}
                         >
@@ -362,15 +363,26 @@
     }
 
     .legend {
+        user-select: none;
+
         display: inline-flex;
         gap: var(--cds-spacing-02);
         float: right;
 
         margin-right: var(--cds-spacing-04);
 
-        span {
+        .legend-icon {
+            line-height: 0;
+            padding-bottom: var(--cds-spacing-01);
+            border-bottom: 1px dashed transparent;
+
             &.active {
                 --cds-icon-secondary: var(--cds-text-error);
+                border-bottom-color: var(--cds-icon-secondary);
+
+                &[id='none'] {
+                    --cds-icon-secondary: var(--cds-interactive-02);
+                }
             }
         }
     }
