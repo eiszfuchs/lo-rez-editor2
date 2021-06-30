@@ -57,13 +57,7 @@
                     ) !== null
                 );
             },
-            check: ({ entryName }) =>
-                [
-                    !versions.has(entryName) ? 'version' : null,
-                    outdated(entryName) ? 'outdated' : null,
-                    fromFuture(entryName) ? 'fromFuture' : null,
-                    drafts.get(entryName, false) ? 'draft' : null,
-                ].filter((d) => d !== null),
+            check: assetCheck,
             label: ({ entryName }) =>
                 entryName.replace(/^assets\/minecraft\/textures\//, ''),
             open: ({ label, zipEntry }) =>
@@ -93,13 +87,7 @@
 
                 return false;
             },
-            check: ({ entryName }) =>
-                [
-                    !versions.has(entryName) ? 'version' : null,
-                    outdated(entryName) ? 'outdated' : null,
-                    fromFuture(entryName) ? 'fromFuture' : null,
-                    drafts.get(entryName, false) ? 'draft' : null,
-                ].filter((d) => d !== null),
+            check: assetCheck,
             label: ({ entryName }) =>
                 entryName.replace(/^assets\/minecraft\/textures\//, ''),
             open: ({ label, zipEntry }) =>
@@ -111,12 +99,27 @@
         },
     ];
 
+    function assetCheck({ entryName }) {
+        return [
+            !versions.has(entryName) ? 'version' : null,
+            outdated(entryName) ? 'outdated' : null,
+            fromFuture(entryName) ? 'fromFuture' : null,
+            drafts.get(entryName, false) ? 'draft' : null,
+        ].filter((d) => d !== null);
+    }
+
     function outdated(filename) {
-        return lt(versions.get(filename), $selectedVersion);
+        return (
+            versions.has(filename) &&
+            lt(versions.get(filename), $selectedVersion)
+        );
     }
 
     function fromFuture(filename) {
-        return lt($selectedVersion, versions.get(filename));
+        return (
+            versions.has(filename) &&
+            lt($selectedVersion, versions.get(filename))
+        );
     }
 
     function makeList() {

@@ -30,21 +30,29 @@
     }
 </script>
 
-<nav>
-    {#each tabs as tab}
-        <span
-            class="tab"
-            class:active={tab.active}
-            on:click={() => activate(tab)}
-        >
-            {tab.label}
-        </span>
-    {/each}
-</nav>
+<div class="wrapper">
+    <nav>
+        {#each tabs as tab}
+            <span
+                class="tab"
+                class:active={tab.active}
+                on:click={() => activate(tab)}
+            >
+                {tab.label}
+            </span>
+        {/each}
+    </nav>
 
-<slot />
+    <slot />
+</div>
 
 <style lang="scss">
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+    }
+
     nav {
         display: flex;
         flex-wrap: wrap;

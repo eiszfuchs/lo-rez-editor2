@@ -1,14 +1,13 @@
 import { ProjectFile } from '../modules/project-file';
 
+// Don't store values that are `false`
+const noFalse = ({ value }) => value !== false;
+
 export const dials = new ProjectFile('lo-rez/dials.jsonl');
 
-export const drafts = new ProjectFile(
-    'lo-rez/drafts.jsonl',
-    // Don't store values that are `false`
-    ({ value }) => value !== false
-);
+export const drafts = new ProjectFile('lo-rez/drafts.jsonl', noFalse);
 
-export const ignorance = new ProjectFile('lo-rez/ignorance.jsonl');
+export const ignorance = new ProjectFile('lo-rez/ignorance.jsonl', noFalse);
 
 export const models = new ProjectFile('lo-rez/models.jsonl');
 

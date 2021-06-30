@@ -25,9 +25,10 @@
 <style lang="scss">
     div {
         position: relative;
-
         background-color: var(--cds-field-01);
-        min-height: calc(100% - 20px);
+
+        flex: 1 0 auto;
+        min-height: 1px;
     }
 
     div:not(.active) {

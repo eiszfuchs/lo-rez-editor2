@@ -33,6 +33,7 @@
     import PickableImage from '../atoms/PickableImage.svelte';
     import PalettePicker from '../atoms/PalettePicker.svelte';
     import PalettePreview from '../atoms/PalettePreview.svelte';
+    import PixelPreview from '../atoms/PixelPreview.svelte';
     import CompareSwitcher from '../atoms/CompareSwitcher.svelte';
     import ComparePanel from '../atoms/ComparePanel.svelte';
     import ChoiceTable from '../modules/ChoiceTable.svelte';
@@ -48,7 +49,7 @@
     import { closeOnSave } from '@/stores/settings.js';
 
     import { extract, paint } from '@/modules/extractor.js';
-    import { flatten, empty, wrap } from '@/modules/texture.js';
+    import { flatten, empty, wrap, copy } from '@/modules/texture.js';
     import { checkAsset } from '@/modules/issues.js';
     import { lt } from '@/modules/version.js';
 
@@ -72,6 +73,9 @@
     let pasteModalOpen = false;
     let pasteOptions = [];
     let pasteMode = null;
+
+    let undoSteps = [];
+    $: undoColors = texturePalette?.toArray();
 
     let texturePalette = null;
     let texture = [];
@@ -161,6 +165,8 @@
             } else {
                 texture = empty(width / 2, height / 2, palette.getDefault());
             }
+
+            makeUndo();
 
             fixOptions = [
                 {
@@ -259,11 +265,34 @@
 
     let highlightPalette = [];
 
+    function makeUndo() {
+        const indexOfUndo = undoSteps.indexOf(texture);
+
+        if (indexOfUndo >= 0) {
+            // TODO: remove steps after current
+            // TODO: remove link step <-> texture
+            // undoSteps = undoSteps.slice(0, indexOfUndo);
+        }
+
+        undoSteps = [...undoSteps, copy(texture)];
+    }
+
+    function onUndo(index) {
+        texture = undoSteps[index];
+    }
+
+    function onTextureChange() {
+        texture = texture;
+        makeUndo();
+    }
+
     function onPickablePick({ detail: { x, y, color } }) {
         try {
             if (textureTool === TOOL_PICK) {
                 texture = textureOverride;
                 textureOverride = null;
+
+                makeUndo();
             } else {
                 return texturePalette.setColor(color);
             }
@@ -300,7 +329,7 @@
                     try {
                         index = texturePalette.findIndex(color, 4);
                     } catch (reason) {}
-                    
+
                     textureOverride[ty][tx] = index;
                 }
             }
@@ -413,65 +442,65 @@
 </script>
 
 <div class="editor" class:active>
-    <div class="layout-box">
-        <div>
-            <CompareSwitcher>
-                <ComparePanel label={$selectedVersion}>
+    <div class="grid-source">
+        <CompareSwitcher>
+            <ComparePanel label={$selectedVersion}>
+                <div class="texture-parent">
+                    <PickableImage
+                        src={previewSrc}
+                        scale={12}
+                        on:pick={onPickablePick}
+                        on:hover={onPickableHover}
+                    />
+                </div>
+            </ComparePanel>
+
+            {#each Object.entries(changes) as [version, data]}
+                <ComparePanel label={version}>
                     <div class="texture-parent">
                         <PickableImage
-                            src={previewSrc}
+                            src={data}
                             scale={12}
                             on:pick={onPickablePick}
                             on:hover={onPickableHover}
                         />
                     </div>
                 </ComparePanel>
+            {/each}
+        </CompareSwitcher>
+    </div>
 
-                {#each Object.entries(changes) as [version, data]}
-                    <ComparePanel label={version}>
-                        <div class="texture-parent">
-                            <PickableImage
-                                src={data}
-                                scale={12}
-                                on:pick={onPickablePick}
-                                on:hover={onPickableHover}
-                            />
-                        </div>
-                    </ComparePanel>
-                {/each}
-            </CompareSwitcher>
-        </div>
-
-        <div>
-            <CompareSwitcher>
-                <ComparePanel label="Editor">
-                    <div class="texture-parent">
-                        <div>
-                            <Canvas
-                                {texture}
-                                tool={textureTool}
-                                palette={texturePalette}
-                                override={textureOverride}
-                                on:change={() => (texture = texture)}
-                            />
-                        </div>
-                    </div>
-                </ComparePanel>
-
-                <ComparePanel label="Exported">
-                    <div class="texture-parent">
-                        <PickableImage
-                            src={epPreviewSrc}
-                            base={8}
-                            scale={24}
-                            on:pick={onPickablePick}
-                            on:hover={onPickableHover}
+    <div class="grid-editor">
+        <CompareSwitcher>
+            <ComparePanel label="Editor">
+                <div class="texture-parent">
+                    <div>
+                        <Canvas
+                            {texture}
+                            tool={textureTool}
+                            palette={texturePalette}
+                            override={textureOverride}
+                            on:change={onTextureChange}
                         />
                     </div>
-                </ComparePanel>
-            </CompareSwitcher>
-        </div>
+                </div>
+            </ComparePanel>
 
+            <ComparePanel label="Exported">
+                <div class="texture-parent">
+                    <PickableImage
+                        src={epPreviewSrc}
+                        base={8}
+                        scale={24}
+                        on:pick={onPickablePick}
+                        on:hover={onPickableHover}
+                    />
+                </div>
+            </ComparePanel>
+        </CompareSwitcher>
+    </div>
+
+    <div class="grid-tools">
         <div class="tools">
             <div class="tool-group">
                 <Button
@@ -542,88 +571,107 @@
         </div>
     </div>
 
-    <div>
+    <div class="grid-palette">
         <PalettePicker palette={texturePalette} highlight={highlightPalette} />
     </div>
 
-    <div class="layout-box texture-previews">
-        <div>
-            <CompareSwitcher>
-                <ComparePanel label={$selectedVersion}>
-                    <div class="texture-preview-parent">
-                        <div
-                            class="texture-preview"
-                            style="background-image: url({previewSrc});"
-                        />
-                    </div>
-                </ComparePanel>
-
-                {#each Object.entries(changes) as [version, data]}
-                    <ComparePanel label={version}>
-                        <div class="texture-preview-parent">
-                            <div
-                                class="texture-preview"
-                                style="background-image: url({data});"
-                            />
-                        </div>
-                    </ComparePanel>
-                {/each}
-            </CompareSwitcher>
-        </div>
-
-        <div>
-            <CompareSwitcher>
-                <ComparePanel label="Editor">
-                    <div class="texture-preview-parent">
-                        <div
-                            class="texture-preview"
-                            style="background-image: url({loPreviewSrc});"
-                        />
-                    </div>
-                </ComparePanel>
-
-                <ComparePanel label="Exported">
-                    <div class="texture-preview-parent">
-                        <div
-                            class="texture-preview"
-                            style="background-image: url({epPreviewSrc});"
-                        />
-                    </div>
-                </ComparePanel>
-            </CompareSwitcher>
+    <div class="grid-undo">
+        <div class="undo-steps">
+            {#each undoSteps as step, index (step)}
+                <button
+                    class="undo-step"
+                    class:active={step === texture}
+                    on:click={() => onUndo(index)}
+                >
+                    <PixelPreview size={4} texture={step} colors={undoColors} />
+                </button>
+            {/each}
         </div>
     </div>
 
-    <div class="actions">
-        <div class="action-group">
-            <Button
-                kind="secondary"
-                size="field"
-                icon={Copy16}
-                on:click={onCopy}
-            >
-                Copy
-            </Button>
+    <div class="grid-preview-source">
+        <CompareSwitcher>
+            <ComparePanel label={$selectedVersion}>
+                <div class="texture-preview-parent">
+                    <div
+                        class="texture-preview"
+                        style="background-image: url({previewSrc});"
+                    />
+                </div>
+            </ComparePanel>
 
-            <Button
-                kind="secondary"
-                size="field"
-                disabled={!$textureClipboard}
-                icon={Paste16}
-                on:click={onPaste}
-            >
-                Paste
-            </Button>
-        </div>
+            {#each Object.entries(changes) as [version, data]}
+                <ComparePanel label={version}>
+                    <div class="texture-preview-parent">
+                        <div
+                            class="texture-preview"
+                            style="background-image: url({data});"
+                        />
+                    </div>
+                </ComparePanel>
+            {/each}
+        </CompareSwitcher>
+    </div>
 
-        <div class="action-group">
-            <Checkbox labelText="Draft" size="sm" bind:checked={isDraft} />
-        </div>
+    <div class="grid-preview-editor">
+        <CompareSwitcher>
+            <ComparePanel label="Editor">
+                <div class="texture-preview-parent">
+                    <div
+                        class="texture-preview"
+                        style="background-image: url({loPreviewSrc});"
+                    />
+                </div>
+            </ComparePanel>
 
-        <div class="action-group">
-            <Button kind="primary" size="field" icon={Save16} on:click={onSave}>
-                Save
-            </Button>
+            <ComparePanel label="Exported">
+                <div class="texture-preview-parent">
+                    <div
+                        class="texture-preview"
+                        style="background-image: url({epPreviewSrc});"
+                    />
+                </div>
+            </ComparePanel>
+        </CompareSwitcher>
+    </div>
+
+    <div class="grid-actions">
+        <div class="actions">
+            <div class="action-group">
+                <Button
+                    kind="secondary"
+                    size="field"
+                    icon={Copy16}
+                    on:click={onCopy}
+                >
+                    Copy
+                </Button>
+
+                <Button
+                    kind="secondary"
+                    size="field"
+                    disabled={!$textureClipboard}
+                    icon={Paste16}
+                    on:click={onPaste}
+                >
+                    Paste
+                </Button>
+            </div>
+
+            <div class="action-group">
+                <Checkbox labelText="Draft" size="sm" bind:checked={isDraft} />
+            </div>
+
+            <div class="action-group">
+                <Button
+                    kind="primary"
+                    size="field"
+                    icon={Save16}
+                    on:click={onSave}
+                >
+                    Save
+                </Button>
+            </div>
         </div>
     </div>
 
@@ -694,8 +742,10 @@
 
 <style lang="scss">
     .editor {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-areas: 'source editor tools' 'palette undo tools' 'preview-s preview-e tools' 'actions actions actions';
+        grid-template-rows: auto auto 1fr auto;
+        grid-template-columns: 1fr 1fr auto;
         gap: var(--cds-spacing-02);
 
         min-height: 100%;
@@ -705,20 +755,30 @@
         }
     }
 
-    .layout-box {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        gap: var(--cds-spacing-02);
-
-        > * {
-            flex: 1 1 1%;
-            min-width: 1px;
-        }
+    .grid-source {
+        grid-area: source;
     }
-
-    .texture-previews {
-        flex: 1 1 auto;
+    .grid-editor {
+        grid-area: editor;
+    }
+    .grid-tools {
+        grid-area: tools;
+    }
+    .grid-palette {
+        grid-area: palette;
+    }
+    .grid-undo {
+        grid-area: undo;
+        overflow: hidden;
+    }
+    .grid-preview-source {
+        grid-area: preview-s;
+    }
+    .grid-preview-editor {
+        grid-area: preview-e;
+    }
+    .grid-actions {
+        grid-area: actions;
     }
 
     .texture-parent {
@@ -762,11 +822,25 @@
 
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: flex-start;
+        gap: var(--cds-spacing-03);
     }
 
     .tool-group {
         background-color: var(--cds-field-01);
+
+        display: flex;
+        flex-direction: column;
+    }
+
+    .undo-steps {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: var(--cds-spacing-03);
+
+        background-color: var(--cds-field-01);
+        padding: var(--cds-spacing-03);
     }
 
     .actions {
