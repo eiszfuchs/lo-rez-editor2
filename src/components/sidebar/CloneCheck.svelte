@@ -23,7 +23,7 @@
 
     let pending = false;
 
-    function onExportClick() {
+    function onExportClick(event) {
         const { zip } = cachedVersions[$selectedVersion];
 
         zip.getEntries().forEach(({ entryName }) => {
@@ -31,7 +31,11 @@
                 const [draft, version, palette, texture] = load(entryName);
 
                 if (draft) {
-                    return;
+                    if (!event.ctrlKey) {
+                        return;
+                    }
+
+                    console.warn(`Not skipping draft ${entryName}`);
                 }
 
                 if (lt(version, $selectedVersion)) {
