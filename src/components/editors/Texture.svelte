@@ -75,6 +75,7 @@
     let pasteMode = null;
 
     let undoSteps = [];
+    let currentUndoStep = -1;
     $: undoColors = texturePalette?.toArray();
 
     let texturePalette = null;
@@ -266,19 +267,20 @@
     let highlightPalette = [];
 
     function makeUndo() {
-        const indexOfUndo = undoSteps.indexOf(texture);
-
-        if (indexOfUndo >= 0) {
+        console.debug(currentUndoStep);
+        if (currentUndoStep >= 0) {
             // TODO: remove steps after current
             // TODO: remove link step <-> texture
             // undoSteps = undoSteps.slice(0, indexOfUndo);
         }
 
         undoSteps = [...undoSteps, copy(texture)];
+        currentUndoStep = undoSteps.length - 1;
     }
 
     function onUndo(index) {
-        texture = undoSteps[index];
+        texture = copy(undoSteps[index]);
+        currentUndoStep = index;
     }
 
     function onTextureChange() {
@@ -414,6 +416,8 @@
 
         issueModalOpen = false;
         fixMode = null;
+
+        makeUndo();
     }
 
     function onPasteApply() {
@@ -427,6 +431,8 @@
 
         pasteModalOpen = false;
         pasteMode = null;
+
+        makeUndo();
     }
 
     function onSave() {
@@ -580,7 +586,7 @@
             {#each undoSteps as step, index (step)}
                 <button
                     class="undo-step"
-                    class:active={step === texture}
+                    class:active={index === currentUndoStep}
                     on:click={() => onUndo(index)}
                 >
                     <PixelPreview size={4} texture={step} colors={undoColors} />
