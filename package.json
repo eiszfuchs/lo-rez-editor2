@@ -17,17 +17,17 @@
     "@rollup/plugin-node-resolve": "^13.0.0",
     "adm-zip": "^0.5.5",
     "axios": "^0.21.1",
-    "carbon-components": "^10.37.0",
-    "carbon-components-svelte": "^0.33.0",
-    "electron": "^13.1.2",
-    "postcss": "^8.3.2",
-    "prettier": "^2.3.1",
-    "prettier-plugin-svelte": "^2.3.0",
-    "rollup": "^2.51.2",
+    "carbon-components": "^10.39.0",
+    "carbon-components-svelte": "^0.39.0",
+    "electron": "^13.1.6",
+    "postcss": "^8.3.5",
+    "prettier": "^2.3.2",
+    "prettier-plugin-svelte": "^2.3.1",
+    "rollup": "^2.53.0",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-svelte": "^7.1.0",
-    "sass": "^1.34.1",
-    "svelte": "^3.38.2",
-    "svelte-preprocess": "^4.7.3"
+    "sass": "^1.35.2",
+    "svelte": "^3.38.3",
+    "svelte-preprocess": "^4.7.4"
   }
 }
