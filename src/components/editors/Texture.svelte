@@ -267,11 +267,8 @@
     let highlightPalette = [];
 
     function makeUndo() {
-        console.debug(currentUndoStep);
         if (currentUndoStep >= 0) {
-            // TODO: remove steps after current
-            // TODO: remove link step <-> texture
-            // undoSteps = undoSteps.slice(0, indexOfUndo);
+            undoSteps = undoSteps.slice(0, currentUndoStep + 1);
         }
 
         undoSteps = [...undoSteps, copy(texture)];
@@ -847,6 +844,30 @@
 
         background-color: var(--cds-field-01);
         padding: var(--cds-spacing-03);
+    }
+
+    .undo-step {
+        margin: 0;
+        padding: 0;
+        border: none;
+        outline: none;
+        appearance: none;
+
+        cursor: pointer;
+        box-shadow: 0 0 0 0 var(--cds-ui-background),
+            0 0 0 3px transparent;
+
+        transition: box-shadow 70ms linear;
+
+        &:hover {
+            box-shadow: 0 0 0 1px var(--cds-ui-background),
+                0 0 0 3px transparent;
+        }
+        
+        &.active {
+            box-shadow: 0 0 0 1px var(--cds-ui-background),
+                0 0 0 3px var(--cds-ui-05);
+        }
     }
 
     .actions {

@@ -26,7 +26,7 @@
 
 <style lang="scss">
     .preview {
-        display: inline-flex;
+        display: flex;
         flex-direction: column;
 
         background: var(--tex-transparent-background);
