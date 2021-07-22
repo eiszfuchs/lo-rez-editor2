@@ -5,6 +5,7 @@
 
     export let palette;
     export let highlight = [];
+    export let used = [];
 
     let unsubscribe = () => {};
     let colorArray = [];
@@ -48,6 +49,7 @@
             <li
                 title={color.toUpperCase()}
                 class:active={colorArray.indexOf(color) === palette.index}
+                class:used={used.includes(colorArray.indexOf(color))}
                 class:highlighted={highlightedIndices.includes(
                     colorArray.indexOf(color)
                 )}
@@ -87,12 +89,32 @@
                 box-shadow: 0 0 0 0 var(--cds-ui-background),
                     0 0 0 3px currentColor;
 
+                position: relative;
+
                 transition: box-shadow 70ms linear;
             }
 
             &.highlighted {
                 position: relative;
                 top: -2px;
+            }
+
+            &.used {
+                b::after {
+                    content: '';
+
+                    position: absolute;
+                    bottom: -1px;
+                    right: -1px;
+
+                    width: 0;
+                    height: 0;
+
+                    border-style: solid;
+                    border-width: 0 0 4px 4px;
+                    border-color: transparent transparent
+                        var(--cds-ui-background) transparent;
+                }
             }
 
             &:hover {

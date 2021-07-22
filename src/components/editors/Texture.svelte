@@ -82,6 +82,7 @@
     let texture = [];
     let textureOverride = null;
     let textureTool = TOOL_PEN;
+    $: textureUsed = [...new Set(flatten(texture))];
 
     const dispatch = createEventDispatcher();
 
@@ -575,7 +576,11 @@
     </div>
 
     <div class="grid-palette">
-        <PalettePicker palette={texturePalette} highlight={highlightPalette} />
+        <PalettePicker
+            palette={texturePalette}
+            highlight={highlightPalette}
+            used={textureUsed}
+        />
     </div>
 
     <div class="grid-undo">
@@ -854,8 +859,7 @@
         appearance: none;
 
         cursor: pointer;
-        box-shadow: 0 0 0 0 var(--cds-ui-background),
-            0 0 0 3px transparent;
+        box-shadow: 0 0 0 0 var(--cds-ui-background), 0 0 0 3px transparent;
 
         transition: box-shadow 70ms linear;
 
@@ -863,7 +867,7 @@
             box-shadow: 0 0 0 1px var(--cds-ui-background),
                 0 0 0 3px transparent;
         }
-        
+
         &.active {
             box-shadow: 0 0 0 1px var(--cds-ui-background),
                 0 0 0 3px var(--cds-ui-05);
