@@ -18,16 +18,16 @@
     "adm-zip": "^0.5.5",
     "axios": "^0.21.1",
     "carbon-components": "^10.39.0",
-    "carbon-components-svelte": "^0.40.1",
+    "carbon-components-svelte": "^0.41.0",
     "electron": "^13.1.7",
-    "postcss": "^8.3.5",
+    "postcss": "^8.3.6",
     "prettier": "^2.3.2",
     "prettier-plugin-svelte": "^2.3.1",
-    "rollup": "^2.53.2",
+    "rollup": "^2.53.3",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-svelte": "^7.1.0",
     "sass": "^1.35.2",
-    "svelte": "^3.38.3",
+    "svelte": "^3.40.0",
     "svelte-preprocess": "^4.7.4"
   }
 }
