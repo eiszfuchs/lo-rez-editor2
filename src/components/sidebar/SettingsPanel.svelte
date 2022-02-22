@@ -26,11 +26,9 @@
         { id: TRANSPARENT_BLACK, text: 'Solid black' },
     ];
 
-    let selectedTransparency = transparencyItems.findIndex(
-        ({ id }) => id === $transparentBackground
-    );
+    let selectedTransparencyId = $transparentBackground;
 
-    $: $transparentBackground = transparencyItems[selectedTransparency].id;
+    $: $transparentBackground = selectedTransparencyId;
 </script>
 
 <div class="border-hack">
@@ -40,7 +38,7 @@
                 direction="top"
                 titleText="Transparency"
                 items={transparencyItems}
-                bind:selectedIndex={selectedTransparency}
+                bind:selectedId={selectedTransparencyId}
             />
 
             <div class="spacer" />
