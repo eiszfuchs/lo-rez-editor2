@@ -7,9 +7,10 @@
 
     import { editors } from '@/stores/editors.js';
 
-    import { Select, SelectItem } from 'carbon-components-svelte';
+    import { Dropdown } from 'carbon-components-svelte';
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
     import ProgressBar from '@/components/atoms/ProgressBar.svelte';
+    import MigrationButton from '@/components/sidebar/MigrationButton.svelte';
 
     const { writeFileSync, mkdirSync, existsSync } = require('fs');
     const axios = require('axios').default;
@@ -21,6 +22,14 @@
 
     $: hasOpenEditors = $editors.length > 0;
     $: loadVersion(selected);
+
+    $: versionItems = [
+        { text: 'Please select' },
+        ...$minecraftVersions.map(({ id }) => ({
+            id,
+            text: id + ($downloadedVersions.includes(id) ? ' (✓ cached)' : ''),
+        })),
+    ];
 
     function fetchVersion(url, version) {
         const targetFilename = `versions/${version}.jar`;
@@ -85,25 +94,20 @@
 
 <SidebarLabel>Minecraft version</SidebarLabel>
 
-<!-- TODO: <Dropdown> looks nicer, maybe try this later? -->
-<Select
-    light
-    hideLabel
-    size="sm"
-    disabled={pending || hasOpenEditors}
-    bind:selected
->
-    <SelectItem text="Please select" />
-
-    {#each $minecraftVersions as version}
-        <SelectItem
-            value={version.id}
-            text="{version.id} {$downloadedVersions.includes(version.id)
-                ? '(✓ cached)'
-                : ''}"
+<div class="layout">
+    <div class="grow">
+        <Dropdown
+            light
+            hideLabel
+            size="sm"
+            disabled={pending || hasOpenEditors}
+            items={versionItems}
+            bind:selectedId={selected}
         />
-    {/each}
-</Select>
+    </div>
+
+    <MigrationButton />
+</div>
 
 {#if pending}
     <div class="spacer" />
@@ -112,6 +116,15 @@
 {/if}
 
 <style lang="scss">
+    .layout {
+        display: flex;
+        gap: var(--cds-spacing-03);
+    }
+
+    .grow {
+        flex: 1 0 auto;
+    }
+
     .spacer {
         height: var(--cds-spacing-02);
     }

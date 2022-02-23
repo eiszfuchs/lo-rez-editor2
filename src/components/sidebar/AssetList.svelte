@@ -200,9 +200,11 @@
         {/each}
     </ul>
 
-    <div class="motivation">
-        <ProgressBar value={completedEntries} max={zipEntries.length} />
-    </div>
+    {#if $selectedVersion}
+        <div class="motivation">
+            <ProgressBar value={completedEntries} max={zipEntries.length} />
+        </div>
+    {/if}
 
     <div class="form">
         <TextInput

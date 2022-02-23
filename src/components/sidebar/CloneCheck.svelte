@@ -24,14 +24,19 @@
     let pending = false;
 
     function onExportClick(event) {
+        const exportDrafts = event.ctrlKey;
         const { zip } = cachedVersions[$selectedVersion];
 
         zip.getEntries().forEach(({ entryName }) => {
+            if (!entryName.startsWith('assets/minecraft')) {
+                return;
+            }
+
             try {
                 const [draft, version, palette, texture] = load(entryName);
 
                 if (draft) {
-                    if (!event.ctrlKey) {
+                    if (!exportDrafts) {
                         return;
                     }
 
