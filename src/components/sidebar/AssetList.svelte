@@ -35,6 +35,10 @@
                     return false;
                 }
 
+                if (name.includes('block/nether_portal')) {
+                    return false;
+                }
+
                 if (name.includes('block/water_')) {
                     return false;
                 }
@@ -74,6 +78,10 @@
                 }
 
                 if (name.includes('fire_0') || name.includes('fire_1')) {
+                    return true;
+                }
+
+                if (name.includes('block/nether_portal')) {
                     return true;
                 }
 
