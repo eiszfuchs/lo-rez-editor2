@@ -201,7 +201,7 @@ void main () {
                   .join(', ')})`
             : '';
 
-    function onPickableHover({ detail: color }) {
+    function onPickableHover({ detail: { color } }) {
         hoverInfo = colorToVec4(color);
     }
 
