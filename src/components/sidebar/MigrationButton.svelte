@@ -8,8 +8,8 @@
     import { lt } from '@/modules/version.js';
 
     import { Button, Modal } from 'carbon-components-svelte';
-    import ArrowDown16 from 'carbon-icons-svelte/lib/ArrowDown16';
-    import Migrate16 from 'carbon-icons-svelte/lib/Migrate16';
+    import ArrowDown from 'carbon-icons-svelte/lib/ArrowDown.svelte';
+    import Migrate from 'carbon-icons-svelte/lib/Migrate.svelte';
 
     let openMigrate = false;
 
@@ -51,7 +51,7 @@
                         savedPalette.join(':') === palette.toArray().join(':')
                     ) {
                         console.debug(
-                            `Will upgrade ${entryName}, since palettes match`
+                            `Upgrading ${entryName}, since palettes match`
                         );
                         versions.set(entryName, $selectedVersion);
                     }
@@ -67,7 +67,7 @@
     size="sm"
     kind="tertiary"
     disabled={hasOpenEditors || !canMigrate}
-    icon={Migrate16}
+    icon={Migrate}
     iconDescription="Migrate"
     on:click={onMigrateClick}
 />
@@ -83,9 +83,9 @@
     on:submit={doMigration}
 >
     <p>
-        This will go through <ArrowDown16 /> outdated assets and set their asset
-        version to <code>{$selectedVersion}</code>. It will take a lot of
-        resources and the application may seem unresponsive for a while.
+        This will go through <ArrowDown /> outdated assets and set their asset version
+        to <code>{$selectedVersion}</code>. It will take a lot of resources and
+        the application may seem unresponsive for a while.
     </p>
     <p>
         The migration process will only upgrade versions if there were no

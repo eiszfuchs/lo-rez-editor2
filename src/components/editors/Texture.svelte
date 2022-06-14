@@ -11,15 +11,15 @@
     import { createEventDispatcher } from 'svelte';
 
     import { Button, Modal, Checkbox } from 'carbon-components-svelte';
-    import Pen16 from 'carbon-icons-svelte/lib/Pen16';
-    import Eyedropper16 from 'carbon-icons-svelte/lib/Eyedropper16';
-    import TextFill16 from 'carbon-icons-svelte/lib/TextFill16';
-    import Shuffle16 from 'carbon-icons-svelte/lib/Shuffle16';
-    import CenterCircle16 from 'carbon-icons-svelte/lib/CenterCircle16';
-    import Move16 from 'carbon-icons-svelte/lib/Move16';
-    import Paste16 from 'carbon-icons-svelte/lib/Paste16';
-    import Copy16 from 'carbon-icons-svelte/lib/Copy16';
-    import Save16 from 'carbon-icons-svelte/lib/Save16';
+    import Pen from 'carbon-icons-svelte/lib/Pen.svelte';
+    import Eyedropper from 'carbon-icons-svelte/lib/Eyedropper.svelte';
+    import TextFill from 'carbon-icons-svelte/lib/TextFill.svelte';
+    import Shuffle from 'carbon-icons-svelte/lib/Shuffle.svelte';
+    import CenterCircle from 'carbon-icons-svelte/lib/CenterCircle.svelte';
+    import Move from 'carbon-icons-svelte/lib/Move.svelte';
+    import Paste from 'carbon-icons-svelte/lib/Paste.svelte';
+    import Copy from 'carbon-icons-svelte/lib/Copy.svelte';
+    import Save from 'carbon-icons-svelte/lib/Save.svelte';
 
     import Canvas, {
         TOOL_PEN,
@@ -513,7 +513,7 @@
                     on:click={() => (textureTool = TOOL_PEN)}
                     size="small"
                     iconDescription="Pen"
-                    icon={Pen16}
+                    icon={Pen}
                     tooltipPosition="left"
                 />
 
@@ -523,7 +523,7 @@
                     on:click={() => (textureTool = TOOL_PICK)}
                     size="small"
                     iconDescription="Pick"
-                    icon={Eyedropper16}
+                    icon={Eyedropper}
                     tooltipPosition="left"
                 />
 
@@ -533,7 +533,7 @@
                     on:click={() => (textureTool = TOOL_FILL)}
                     size="small"
                     iconDescription="Fill"
-                    icon={TextFill16}
+                    icon={TextFill}
                     tooltipPosition="left"
                 />
             </div>
@@ -546,7 +546,7 @@
                     on:click={() => (textureTool = TOOL_SWAP)}
                     size="small"
                     iconDescription="Swap"
-                    icon={Shuffle16}
+                    icon={Shuffle}
                     tooltipPosition="left"
                 />
 
@@ -556,7 +556,7 @@
                     on:click={() => (textureTool = TOOL_REPLACE)}
                     size="small"
                     iconDescription="Replace"
-                    icon={CenterCircle16}
+                    icon={CenterCircle}
                     tooltipPosition="left"
                 />
             </div>
@@ -568,7 +568,7 @@
                     on:click={() => (textureTool = TOOL_MOVE)}
                     size="small"
                     iconDescription="Move"
-                    icon={Move16}
+                    icon={Move}
                     tooltipPosition="left"
                 />
             </div>
@@ -649,7 +649,7 @@
                 <Button
                     kind="secondary"
                     size="field"
-                    icon={Copy16}
+                    icon={Copy}
                     on:click={onCopy}
                 >
                     Copy
@@ -659,7 +659,7 @@
                     kind="secondary"
                     size="field"
                     disabled={!$textureClipboard}
-                    icon={Paste16}
+                    icon={Paste}
                     on:click={onPaste}
                 >
                     Paste
@@ -674,7 +674,7 @@
                 <Button
                     kind="primary"
                     size="field"
-                    icon={Save16}
+                    icon={Save}
                     on:click={onSave}
                 >
                     Save

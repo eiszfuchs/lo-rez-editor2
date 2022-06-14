@@ -6,7 +6,7 @@
         Checkbox,
         InlineNotification,
     } from 'carbon-components-svelte';
-    import Save16 from 'carbon-icons-svelte/lib/Save16';
+    import Save from 'carbon-icons-svelte/lib/Save.svelte';
 
     import PickableImage from '../atoms/PickableImage.svelte';
     import CompareSwitcher from '../atoms/CompareSwitcher.svelte';
@@ -274,7 +274,7 @@ void main () {
                 disabled={!shaderValid}
                 kind="primary"
                 size="field"
-                icon={Save16}
+                icon={Save}
                 on:click={onSave}
             >
                 Save

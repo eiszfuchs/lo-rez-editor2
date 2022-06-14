@@ -4,7 +4,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import preprocess from 'svelte-preprocess';
 import css from 'rollup-plugin-css-only';
-import { optimizeCarbonImports } from 'carbon-components-svelte/preprocess';
+import { optimizeImports as optimizeCarbonImports } from 'carbon-preprocess-svelte';
 
 export default {
     input: 'src/index.js',

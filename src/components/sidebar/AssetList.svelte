@@ -5,10 +5,10 @@
     import { lt } from '@/modules/version.js';
 
     import { TextInput } from 'carbon-components-svelte';
-    import WarningAltFilled16 from 'carbon-icons-svelte/lib/WarningAltFilled16';
-    import ArrowDown16 from 'carbon-icons-svelte/lib/ArrowDown16';
-    import ArrowUp16 from 'carbon-icons-svelte/lib/ArrowUp16';
-    import IncompleteWarning16 from 'carbon-icons-svelte/lib/IncompleteWarning16';
+    import WarningAltFilled from 'carbon-icons-svelte/lib/WarningAltFilled.svelte';
+    import ArrowDown from 'carbon-icons-svelte/lib/ArrowDown.svelte';
+    import ArrowUp from 'carbon-icons-svelte/lib/ArrowUp.svelte';
+    import IncompleteWarning from 'carbon-icons-svelte/lib/IncompleteWarning.svelte';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
     import ProgressBar from '@/components/atoms/ProgressBar.svelte';
@@ -188,13 +188,13 @@
                 <span>{entry.label}</span>
 
                 {#if entry.warnings.includes('version')}
-                    <WarningAltFilled16 />
+                    <WarningAltFilled />
                 {:else if entry.warnings.includes('outdated')}
-                    <ArrowDown16 />
+                    <ArrowDown />
                 {:else if entry.warnings.includes('fromFuture')}
-                    <ArrowUp16 />
+                    <ArrowUp />
                 {:else if entry.warnings.includes('draft')}
-                    <IncompleteWarning16 />
+                    <IncompleteWarning />
                 {/if}
             </li>
         {/each}

@@ -2,7 +2,7 @@
     import { InlineNotification } from 'carbon-components-svelte';
     import { Button } from 'carbon-components-svelte';
     import { InlineLoading } from 'carbon-components-svelte';
-    import DrillDown16 from 'carbon-icons-svelte/lib/DrillDown16';
+    import DrillDown from 'carbon-icons-svelte/lib/DrillDown.svelte';
 
     import { Palette } from '@/struct/palette.js';
 
@@ -84,7 +84,7 @@
         <Button
             size="small"
             kind="tertiary"
-            icon={DrillDown16}
+            icon={DrillDown}
             disabled={!$selectedVersion}
             on:click={onExportClick}
         >

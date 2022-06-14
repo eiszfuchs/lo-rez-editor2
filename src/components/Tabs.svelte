@@ -2,7 +2,7 @@
     import { editors, activeEditor, closeEditor } from '@/stores/editors.js';
 
     import { Button } from 'carbon-components-svelte';
-    import CloseOutline16 from 'carbon-icons-svelte/lib/CloseOutline16';
+    import CloseOutline from 'carbon-icons-svelte/lib/CloseOutline.svelte';
 
     function activate(editor) {
         $activeEditor = editor;
@@ -22,7 +22,7 @@
                 size="small"
                 kind="ghost"
                 iconDescription="Close tab"
-                icon={CloseOutline16}
+                icon={CloseOutline}
                 on:click={() => close(editor)}
             />
         </div>
