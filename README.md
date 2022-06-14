@@ -2,7 +2,7 @@
 
 Surprise! It's a [Svelte](https://svelte.dev) rewrite!
 
-![Current state](docs/20210312-152108-340de309.png)
+![Current state](docs/20220614-094438-8d0f7277.png)
 
 Rumour has it, I was trying to make some changes to the old editor and almost had a heart attack (and we don't want that to happen, do we?).
 
