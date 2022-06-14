@@ -15,7 +15,7 @@
     const { writeFileSync, mkdirSync, existsSync } = require('fs');
     const axios = require('axios').default;
 
-    let selected;
+    let selected = '';
 
     let pending = false;
     let progress = 1;
@@ -24,7 +24,7 @@
     $: loadVersion(selected);
 
     $: versionItems = [
-        { text: 'Please select' },
+        { id: '', text: 'Please select' },
         ...$minecraftVersions.map(({ id }) => ({
             id,
             text: id + ($downloadedVersions.includes(id) ? ' (✓ cached)' : ''),
