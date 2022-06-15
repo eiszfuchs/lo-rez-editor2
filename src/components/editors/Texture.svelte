@@ -21,15 +21,7 @@
     import Copy from 'carbon-icons-svelte/lib/Copy.svelte';
     import Save from 'carbon-icons-svelte/lib/Save.svelte';
 
-    import Canvas, {
-        TOOL_PEN,
-        TOOL_FILL,
-        TOOL_PICK,
-        TOOL_SWAP,
-        TOOL_REPLACE,
-        TOOL_MOVE,
-    } from '../atoms/PixelCanvas.svelte';
-
+    import Canvas from '../atoms/PixelCanvas.svelte';
     import PickableImage from '../atoms/PickableImage.svelte';
     import PalettePicker from '../atoms/PalettePicker.svelte';
     import PalettePreview from '../atoms/PalettePreview.svelte';
@@ -46,6 +38,15 @@
 
     import { drafts, palettes, textures, versions } from '@/stores/project.js';
     import { textureClipboard } from '@/stores/clipboard.js';
+    import {
+        activeTextureTool,
+        TOOL_PEN,
+        TOOL_FILL,
+        TOOL_PICK,
+        TOOL_SWAP,
+        TOOL_REPLACE,
+        TOOL_MOVE,
+    } from '@/stores/tools.js';
     import { closeOnSave } from '@/stores/settings.js';
 
     import { extract, paint } from '@/modules/extractor.js';
@@ -81,7 +82,6 @@
     let texturePalette = null;
     let texture = [];
     let textureOverride = null;
-    let textureTool = TOOL_PEN;
     $: textureUsed = [...new Set(flatten(texture))];
 
     const dispatch = createEventDispatcher();
@@ -288,7 +288,7 @@
 
     function onPickablePick({ detail: { x, y, color } }) {
         try {
-            if (textureTool === TOOL_PICK) {
+            if ($activeTextureTool === TOOL_PICK) {
                 texture = textureOverride;
                 textureOverride = null;
 
@@ -305,7 +305,7 @@
         highlightPalette = [];
         textureOverride = null;
 
-        if (textureTool === TOOL_PICK) {
+        if ($activeTextureTool === TOOL_PICK) {
             if (!pick) {
                 return;
             }
@@ -481,7 +481,6 @@
                     <div>
                         <Canvas
                             {texture}
-                            tool={textureTool}
                             palette={texturePalette}
                             override={textureOverride}
                             on:change={onTextureChange}
@@ -509,8 +508,8 @@
             <div class="tool-group">
                 <Button
                     kind="ghost"
-                    isSelected={textureTool === TOOL_PEN}
-                    on:click={() => (textureTool = TOOL_PEN)}
+                    isSelected={$activeTextureTool === TOOL_PEN}
+                    on:click={() => activeTextureTool.set(TOOL_PEN)}
                     size="small"
                     iconDescription="Pen"
                     icon={Pen}
@@ -519,8 +518,8 @@
 
                 <Button
                     kind="ghost"
-                    isSelected={textureTool === TOOL_PICK}
-                    on:click={() => (textureTool = TOOL_PICK)}
+                    isSelected={$activeTextureTool === TOOL_PICK}
+                    on:click={() => activeTextureTool.set(TOOL_PICK)}
                     size="small"
                     iconDescription="Pick"
                     icon={Eyedropper}
@@ -529,8 +528,8 @@
 
                 <Button
                     kind="ghost"
-                    isSelected={textureTool === TOOL_FILL}
-                    on:click={() => (textureTool = TOOL_FILL)}
+                    isSelected={$activeTextureTool === TOOL_FILL}
+                    on:click={() => activeTextureTool.set(TOOL_FILL)}
                     size="small"
                     iconDescription="Fill"
                     icon={TextFill}
@@ -542,8 +541,8 @@
                 <Button
                     disabled
                     kind="ghost"
-                    isSelected={textureTool === TOOL_SWAP}
-                    on:click={() => (textureTool = TOOL_SWAP)}
+                    isSelected={$activeTextureTool === TOOL_SWAP}
+                    on:click={() => activeTextureTool.set(TOOL_SWAP)}
                     size="small"
                     iconDescription="Swap"
                     icon={Shuffle}
@@ -552,8 +551,8 @@
 
                 <Button
                     kind="ghost"
-                    isSelected={textureTool === TOOL_REPLACE}
-                    on:click={() => (textureTool = TOOL_REPLACE)}
+                    isSelected={$activeTextureTool === TOOL_REPLACE}
+                    on:click={() => activeTextureTool.set(TOOL_REPLACE)}
                     size="small"
                     iconDescription="Replace"
                     icon={CenterCircle}
@@ -564,8 +563,8 @@
             <div class="tool-group">
                 <Button
                     kind="ghost"
-                    isSelected={textureTool === TOOL_MOVE}
-                    on:click={() => (textureTool = TOOL_MOVE)}
+                    isSelected={$activeTextureTool === TOOL_MOVE}
+                    on:click={() => activeTextureTool.set(TOOL_MOVE)}
                     size="small"
                     iconDescription="Move"
                     icon={Move}

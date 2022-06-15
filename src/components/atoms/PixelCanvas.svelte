@@ -1,14 +1,12 @@
-<script context="module">
-    export const TOOL_PEN = 'pen';
-    export const TOOL_FILL = 'fill';
-    export const TOOL_PICK = 'pick';
-    export const TOOL_SWAP = 'swap';
-    export const TOOL_REPLACE = 'replace';
-    export const TOOL_MOVE = 'move';
-</script>
-
 <script>
     import { createEventDispatcher } from 'svelte';
+    import {
+        activeTextureTool,
+        TOOL_PEN,
+        TOOL_FILL,
+        TOOL_REPLACE,
+        TOOL_MOVE,
+    } from '@/stores/tools.js';
     import { empty } from '@/modules/texture.js';
     import { VectorSet2D } from '@/struct/vector2d-set.js';
     import { Vector2D } from '@/struct/vector2d.js';
@@ -16,7 +14,6 @@
     export let texture;
     export let palette;
     export let override;
-    export let tool = TOOL_PEN;
 
     const dispatch = createEventDispatcher();
 
@@ -128,19 +125,19 @@
     function commit(container, index, vectorSet) {
         const vectors = vectorSet.toArray();
 
-        if (tool === TOOL_PEN) {
+        if ($activeTextureTool === TOOL_PEN) {
             vectors.forEach((vector) =>
                 penPut(container, vector.x, vector.y, index)
             );
-        } else if (tool === TOOL_FILL) {
+        } else if ($activeTextureTool === TOOL_FILL) {
             vectors.forEach((vector) =>
                 fillPut(container, vector.x, vector.y, index)
             );
-        } else if (tool === TOOL_REPLACE) {
+        } else if ($activeTextureTool === TOOL_REPLACE) {
             vectors.forEach((vector) =>
                 replacePut(container, vector.x, vector.y, index)
             );
-        } else if (tool === TOOL_MOVE) {
+        } else if ($activeTextureTool === TOOL_MOVE) {
             movePut(container, vectors);
         }
     }
@@ -172,7 +169,7 @@
         commit(preview, palette.index, actionCollection);
         preview = preview;
 
-        if (tool === TOOL_MOVE) {
+        if ($activeTextureTool === TOOL_MOVE) {
             const first = actionCollection.toArray()[0];
 
             actionCollection.clear();
