@@ -35,6 +35,9 @@
     .box {
         background-color: var(--cds-field-01);
 
+        // To fix some visual issues with nested components that also use --cds-field-01:
+        --cds-layer: var(--cds-field-02);
+
         &.padded {
             padding: var(--cds-spacing-03);
         }

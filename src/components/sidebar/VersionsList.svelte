@@ -7,9 +7,8 @@
 
     import { editors } from '@/stores/editors.js';
 
-    import { Dropdown } from 'carbon-components-svelte';
+    import { Dropdown, ProgressBar } from 'carbon-components-svelte';
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
-    import ProgressBar from '@/components/atoms/ProgressBar.svelte';
     import MigrationButton from '@/components/sidebar/MigrationButton.svelte';
 
     const { writeFileSync, mkdirSync, existsSync } = require('fs');
@@ -112,7 +111,7 @@
 {#if pending}
     <div class="spacer" />
 
-    <ProgressBar value={progress} max={1} />
+    <ProgressBar hideLabel value={progress} max={1} size="sm" />
 {/if}
 
 <style lang="scss">
@@ -126,6 +125,6 @@
     }
 
     .spacer {
-        height: var(--cds-spacing-02);
+        height: var(--cds-spacing-03);
     }
 </style>

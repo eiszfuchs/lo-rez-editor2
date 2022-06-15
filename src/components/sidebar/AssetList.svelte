@@ -4,14 +4,14 @@
     import { drafts, versions } from '@/stores/project.js';
     import { lt } from '@/modules/version.js';
 
-    import { TextInput } from 'carbon-components-svelte';
+    import { Search, ProgressBar } from 'carbon-components-svelte';
     import WarningAltFilled from 'carbon-icons-svelte/lib/WarningAltFilled.svelte';
     import ArrowDown from 'carbon-icons-svelte/lib/ArrowDown.svelte';
     import ArrowUp from 'carbon-icons-svelte/lib/ArrowUp.svelte';
+    import Filter from 'carbon-icons-svelte/lib/Filter.svelte';
     import IncompleteWarning from 'carbon-icons-svelte/lib/IncompleteWarning.svelte';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
-    import ProgressBar from '@/components/atoms/ProgressBar.svelte';
     import TextureEditor from '@/components/editors/Texture.svelte';
     import ShaderEditor from '@/components/editors/Shader.svelte';
 
@@ -184,6 +184,18 @@
         {/if}
     </SidebarLabel>
 
+    <div class="form">
+        <Search
+            inline
+            light
+            size="sm"
+            icon={Filter}
+            placeholder="Filter by name..."
+            disabled={!$selectedVersion}
+            bind:value={filterSearch}
+        />
+    </div>
+
     <!-- This is the actual list -->
     <ul class="assets">
         {#each zipEntries as entry}
@@ -210,21 +222,14 @@
 
     {#if $selectedVersion}
         <div class="motivation">
-            <ProgressBar value={completedEntries} max={zipEntries.length} />
+            <ProgressBar
+                labelText="Remix process"
+                helperText="{completedEntries} of {zipEntries.length} assets completed"
+                value={completedEntries}
+                max={zipEntries.length}
+            />
         </div>
     {/if}
-
-    <div class="form">
-        <TextInput
-            inline
-            light
-            size="sm"
-            labelText="Search"
-            placeholder="Filter by name..."
-            disabled={!$selectedVersion}
-            bind:value={filterSearch}
-        />
-    </div>
 </div>
 
 <style lang="scss">
@@ -259,7 +264,7 @@
 
     .form {
         flex: 0 1 auto;
-        margin-top: var(--cds-spacing-02);
+        margin-bottom: var(--cds-spacing-03);
     }
 
     .entry {

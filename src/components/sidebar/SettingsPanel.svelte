@@ -32,7 +32,7 @@
 </script>
 
 <div class="border-hack">
-    <Accordion size="sm">
+    <Accordion size="sm" align="start">
         <AccordionItem title="Global settings">
             <Dropdown
                 direction="top"
