@@ -71,6 +71,7 @@
                     label,
                     zipEntry,
                 });
+
                 activeTextureTool.init();
             },
         },

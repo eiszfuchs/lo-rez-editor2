@@ -1,12 +1,5 @@
 import { get, writable } from 'svelte/store';
-
-// Texture tools
-export const TOOL_PEN = 'pen';
-export const TOOL_FILL = 'fill';
-export const TOOL_PICK = 'pick';
-export const TOOL_SWAP = 'swap';
-export const TOOL_REPLACE = 'replace';
-export const TOOL_MOVE = 'move';
+import { TOOL_PEN } from '@/consts/tools.js';
 
 const createActiveTextureTool = () => {
     const { subscribe, set } = writable('');
@@ -17,11 +10,8 @@ const createActiveTextureTool = () => {
         init,
         set: (toTool = '', ignoreTools = []) => {
             const currentTextureTool = get(activeTextureTool);
-            const ignoreToolsMatch = ignoreTools.some(
-                (tool) => tool === currentTextureTool
-            );
 
-            if (ignoreToolsMatch) {
+            if (ignoreTools.includes(currentTextureTool)) {
                 set(currentTextureTool);
             } else {
                 set(toTool);

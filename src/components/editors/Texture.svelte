@@ -38,16 +38,17 @@
 
     import { drafts, palettes, textures, versions } from '@/stores/project.js';
     import { textureClipboard } from '@/stores/clipboard.js';
+    import { closeOnSave } from '@/stores/settings.js';
+    import { activeTextureTool } from '@/stores/tools.js';
+
     import {
-        activeTextureTool,
         TOOL_PEN,
         TOOL_FILL,
         TOOL_PICK,
         TOOL_SWAP,
         TOOL_REPLACE,
         TOOL_MOVE,
-    } from '@/stores/tools.js';
-    import { closeOnSave } from '@/stores/settings.js';
+    } from '@/consts/tools.js';
 
     import { extract, paint } from '@/modules/extractor.js';
     import { flatten, empty, wrap, copy } from '@/modules/texture.js';

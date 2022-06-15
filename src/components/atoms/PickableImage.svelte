@@ -2,12 +2,12 @@
     import { createEventDispatcher } from 'svelte';
 
     import {
-        activeTextureTool,
         TOOL_PEN,
         TOOL_FILL,
         TOOL_PICK,
         TOOL_REPLACE,
-    } from '@/stores/tools.js';
+    } from '@/consts/tools.js';
+    import { activeTextureTool } from '@/stores/tools.js';
 
     import { extract } from '@/modules/extractor.js';
 

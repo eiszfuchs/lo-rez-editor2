@@ -1,12 +1,8 @@
 <script>
     import { onDestroy } from 'svelte';
 
-    import {
-        activeTextureTool,
-        TOOL_PEN,
-        TOOL_FILL,
-        TOOL_REPLACE,
-    } from '@/stores/tools.js';
+    import { TOOL_PEN, TOOL_FILL, TOOL_REPLACE } from '@/consts/tools.js';
+    import { activeTextureTool } from '@/stores/tools.js';
 
     import { sortNearest } from '@/modules/color.js';
 

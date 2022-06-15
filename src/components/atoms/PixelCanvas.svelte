@@ -1,12 +1,14 @@
 <script>
     import { createEventDispatcher } from 'svelte';
+
     import {
-        activeTextureTool,
         TOOL_PEN,
         TOOL_FILL,
         TOOL_REPLACE,
         TOOL_MOVE,
-    } from '@/stores/tools.js';
+    } from '@/consts/tools.js';
+    import { activeTextureTool } from '@/stores/tools.js';
+
     import { empty } from '@/modules/texture.js';
     import { VectorSet2D } from '@/struct/vector2d-set.js';
     import { Vector2D } from '@/struct/vector2d.js';
