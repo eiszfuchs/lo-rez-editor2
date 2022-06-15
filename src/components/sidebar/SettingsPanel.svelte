@@ -6,6 +6,8 @@
         Dropdown,
     } from 'carbon-components-svelte';
 
+    import { closeOnSave, transparentBackground } from '@/stores/settings.js';
+
     import {
         TRANSPARENT_FOLLOW,
         TRANSPARENT_BRIGHT,
@@ -13,9 +15,7 @@
         TRANSPARENT_WHITE,
         TRANSPARENT_FUCHSIA,
         TRANSPARENT_BLACK,
-        closeOnSave,
-        transparentBackground,
-    } from '@/stores/settings.js';
+    } from '@/consts/settings.js';
 
     const transparencyItems = [
         { id: TRANSPARENT_FOLLOW, text: 'Follow system' },

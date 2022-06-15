@@ -1,28 +1,10 @@
-import { writable } from 'svelte/store';
+import persistentWritable from './persistent';
+import { TRANSPARENT_FOLLOW } from '@/consts/settings.js';
 
-export const TRANSPARENT_FOLLOW = 'follow';
-export const TRANSPARENT_BRIGHT = 'bright';
-export const TRANSPARENT_DARK = 'dark';
-export const TRANSPARENT_WHITE = 'white';
-export const TRANSPARENT_BLACK = 'black';
-export const TRANSPARENT_FUCHSIA = 'fuchsia';
-
-const persistentWritable = (defaultName, persistenceName) => {
-    let initialValue = defaultName;
-    const storedValue = localStorage.getItem(persistenceName);
-
-    if (storedValue) {
-        initialValue = JSON.parse(storedValue);
-    }
-
-    const store = writable(initialValue);
-
-    store.subscribe((newValue) => {
-        localStorage.setItem(persistenceName, JSON.stringify(newValue));
-    });
-
-    return store;
-};
+export const filterStatuses = persistentWritable(
+    [],
+    'asset_list.filter_statuses'
+);
 
 export const closeOnSave = persistentWritable(false, 'settings.close_on_save');
 

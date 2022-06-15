@@ -3,6 +3,7 @@
     import { openEditor } from '@/stores/editors.js';
     import { activeTextureTool } from '@/stores/tools.js';
     import { drafts, versions } from '@/stores/project.js';
+    import { filterStatuses } from '@/stores/settings.js';
     import { lt } from '@/modules/version.js';
 
     import { Search, ProgressBar } from 'carbon-components-svelte';
@@ -11,6 +12,7 @@
     import ArrowUp from 'carbon-icons-svelte/lib/ArrowUp.svelte';
     import Filter from 'carbon-icons-svelte/lib/Filter.svelte';
     import IncompleteWarning from 'carbon-icons-svelte/lib/IncompleteWarning.svelte';
+    import CheckmarkFilled from 'carbon-icons-svelte/lib/CheckmarkFilled.svelte';
 
     import SidebarLabel from '@/components/atoms/SidebarLabel.svelte';
     import TextureEditor from '@/components/editors/Texture.svelte';
@@ -18,8 +20,33 @@
 
     const sortCollator = new Intl.Collator();
 
+    const arrayOverlap = (a, b) => a.some((e) => b.includes(e));
+
     let zipEntries = [];
     let filterSearch = '';
+
+    const warningTypes = [
+        {
+            type: 'completed',
+            icon: CheckmarkFilled,
+        },
+        {
+            type: 'version',
+            icon: WarningAltFilled,
+        },
+        {
+            type: 'outdated',
+            icon: ArrowDown,
+        },
+        {
+            type: 'fromFuture',
+            icon: ArrowUp,
+        },
+        {
+            type: 'draft',
+            icon: IncompleteWarning,
+        },
+    ];
 
     const capabilities = [
         {
@@ -120,6 +147,14 @@
         ].filter((d) => d !== null);
     }
 
+    function toggleStatusFilter(statusName) {
+        if ($filterStatuses.includes(statusName)) {
+            $filterStatuses = $filterStatuses.filter((s) => s !== statusName);
+        } else {
+            $filterStatuses = [...$filterStatuses, statusName];
+        }
+    }
+
     function outdated(filename) {
         return (
             versions.has(filename) &&
@@ -181,11 +216,26 @@
 
 <div class="layout">
     <SidebarLabel>
-        Asset list
+        <span class="flexed-sidebar-label">
+            <span>
+                Asset list
 
-        {#if $selectedVersion}
-            ({$selectedVersion})
-        {/if}
+                {#if $selectedVersion}
+                    ({$selectedVersion})
+                {/if}
+            </span>
+
+            {#each warningTypes as w}
+                <span
+                    class="status-filter"
+                    class:disabled={!$selectedVersion}
+                    class:active={$filterStatuses.includes(w.type)}
+                    on:click={() => toggleStatusFilter(w.type)}
+                >
+                    <svelte:component this={w.icon} />
+                </span>
+            {/each}
+        </span>
     </SidebarLabel>
 
     <div class="form">
@@ -206,20 +256,19 @@
             <li
                 class="entry"
                 class:has-warning={entry.warnings.length > 0}
-                class:hidden={!entry.label.includes(filterSearch)}
+                class:hidden={!entry.label.includes(filterSearch) ||
+                    arrayOverlap($filterStatuses, entry.warnings) ||
+                    (!entry.warnings.length &&
+                        $filterStatuses.includes('completed'))}
                 on:click={entry.onClick}
             >
                 <span>{entry.label}</span>
 
-                {#if entry.warnings.includes('version')}
-                    <WarningAltFilled />
-                {:else if entry.warnings.includes('outdated')}
-                    <ArrowDown />
-                {:else if entry.warnings.includes('fromFuture')}
-                    <ArrowUp />
-                {:else if entry.warnings.includes('draft')}
-                    <IncompleteWarning />
-                {/if}
+                {#each warningTypes as w}
+                    {#if entry.warnings.includes(w.type)}
+                        <svelte:component this={w.icon} />
+                    {/if}
+                {/each}
             </li>
         {/each}
     </ul>
@@ -241,6 +290,17 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+    }
+
+    .flexed-sidebar-label {
+        display: flex;
+        align-items: center;
+        justify-content: start;
+        column-gap: var(--cds-spacing-02);
+
+        :first-child {
+            flex-grow: 1;
+        }
     }
 
     .assets {
@@ -269,6 +329,26 @@
     .form {
         flex: 0 1 auto;
         margin-bottom: var(--cds-spacing-03);
+    }
+
+    .status-filter {
+        display: flex;
+        color: var(--cds-interactive);
+        cursor: pointer;
+
+        &.disabled {
+            color: var(--cds-disabled-02);
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        &:hover {
+            color: var(--cds-hover-tertiary);
+        }
+
+        &.active {
+            color: var(--cds-interactive-02);
+        }
     }
 
     .entry {

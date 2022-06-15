@@ -1,5 +1,6 @@
 <script>
     import { editors, activeEditor, closeEditor } from '@/stores/editors.js';
+    import { transparentBackground } from '@/stores/settings.js';
 
     import {
         TRANSPARENT_BRIGHT,
@@ -7,8 +8,7 @@
         TRANSPARENT_WHITE,
         TRANSPARENT_FUCHSIA,
         TRANSPARENT_BLACK,
-        transparentBackground,
-    } from '@/stores/settings.js';
+    } from '@/consts/settings.js';
 
     $: dynamicStyle = [
         $transparentBackground === TRANSPARENT_BRIGHT
