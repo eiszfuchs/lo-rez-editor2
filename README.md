@@ -17,7 +17,7 @@ If you want to try it early, just install all packages, build the theme and star
 ```shell
 npm ci
 npm run build
-npm run start
+npm start
 ```
 
 This assumes you have got NodeJS installed.
