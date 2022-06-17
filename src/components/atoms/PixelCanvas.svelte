@@ -17,6 +17,10 @@
     export let palette;
     export let override;
 
+    export let frame = 0;
+    export let base = 16;
+    export let size = 24;
+
     const dispatch = createEventDispatcher();
 
     let moveParent;
@@ -26,6 +30,19 @@
     $: height = texture?.length || 0;
     $: width = texture[0]?.length || 0;
     $: colors = [...(palette?.colors || [])];
+
+    $: displaySize = base * size;
+
+    $: wrapperStyle = [
+        `width: ${base * size}px`,
+        `height: ${base * size}px`,
+        `--frame-right-offset: ${
+            Math.floor((frame * displaySize) / (height * size)) * displaySize
+        }px`,
+        `--frame-bottom-offset: ${(frame * displaySize) % (height * size)}px`,
+    ]
+        .filter((d) => !!d)
+        .join(';');
 
     $: preview = Array(height)
         .fill(null)
@@ -212,33 +229,46 @@
     }
 </script>
 
-<div
-    class="canvas"
-    bind:this={moveParent}
-    on:mousedown={onPress}
-    on:mousemove={onMove}
-    on:mouseleave={onLeave}
->
-    {#each Array(height) as _, y}
-        <div class="row">
-            {#each Array(width) as _, x}
-                <div
-                    class="pixel"
-                    style="background-color: {previewAt(
-                        x,
-                        y,
-                        override ?? preview
-                    ) ?? textureAt(x, y, texture)}"
-                />
-            {/each}
-        </div>
-    {/each}
+<div class="wrapper" style={wrapperStyle}>
+    <div
+        class="canvas"
+        bind:this={moveParent}
+        on:mousedown={onPress}
+        on:mousemove={onMove}
+        on:mouseleave={onLeave}
+    >
+        {#each Array(height) as _, y}
+            <div class="row">
+                {#each Array(width) as _, x}
+                    <div
+                        class="pixel"
+                        style="background-color: {previewAt(
+                            x,
+                            y,
+                            override ?? preview
+                        ) ?? textureAt(x, y, texture)}"
+                    />
+                {/each}
+            </div>
+        {/each}
+    </div>
 </div>
 
 <style lang="scss">
+    .wrapper {
+        display: flex;
+
+        position: relative;
+        overflow: hidden;
+    }
+
     .canvas {
         display: flex;
         flex-direction: column;
+
+        position: relative;
+        right: var(--frame-right-offset, 0);
+        bottom: var(--frame-bottom-offset, 0);
 
         background: var(--tex-transparent-background);
     }

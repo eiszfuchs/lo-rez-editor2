@@ -67,11 +67,17 @@
                     return false;
                 }
 
-                if (name.includes('block/water_')) {
+                if (
+                    name.includes('block/water_flow') ||
+                    name.includes('block/water_still')
+                ) {
                     return false;
                 }
 
-                if (name.includes('block/lava_')) {
+                if (
+                    name.includes('block/lava_flow') ||
+                    name.includes('block/lava_still')
+                ) {
                     return false;
                 }
 
@@ -116,11 +122,17 @@
                     return true;
                 }
 
-                if (name.includes('block/water_')) {
+                if (
+                    name.includes('block/water_flow') ||
+                    name.includes('block/water_still')
+                ) {
                     return true;
                 }
 
-                if (name.includes('block/lava_')) {
+                if (
+                    name.includes('block/lava_flow') ||
+                    name.includes('block/lava_still')
+                ) {
                     return true;
                 }
 
@@ -129,12 +141,13 @@
             check: assetCheck,
             label: ({ entryName }) =>
                 entryName.replace(/^assets\/minecraft\/textures\//, ''),
-            open: ({ label, zipEntry }) =>
+            open: ({ label, zipEntry }) => {
                 openEditor({
                     ui: ShaderEditor,
                     label,
                     zipEntry,
-                }),
+                });
+            },
         },
     ];
 

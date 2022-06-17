@@ -37,7 +37,7 @@ void main() {
 `.trimStart();
 
     let fragmentShaderSource = `
-    precision mediump float;
+precision mediump float;
 
 uniform float time;
 
@@ -56,6 +56,20 @@ void main () {
     $: entryName = zipEntry?.entryName;
     $: previewSrc = dataToUri(zipEntry?.getData());
 
+    let gl;
+    let program;
+    let vbo = {};
+    let timeLocation;
+
+    let frame = 0;
+    let totalFrames = 1;
+    let canvas = null;
+
+    let shaderValid = true;
+    let hoverInfo = '';
+
+    let isDraft = false;
+
     function init() {
         isDraft = drafts.get(entryName, false);
         fragmentShaderSource = shaders.get(entryName, fragmentShaderSource);
@@ -63,20 +77,6 @@ void main () {
 
     // Init like this to prevent re-load when another editor is opened
     $: init(previewSrc);
-
-    let gl;
-    let program;
-    let vbo = {};
-    let timeLocation;
-
-    let frame = 0;
-    let totalFrames = 24;
-    let canvas = null;
-
-    let shaderValid = true;
-    let hoverInfo = '';
-
-    let isDraft = false;
 
     function updateShaders() {
         if (!gl) return;

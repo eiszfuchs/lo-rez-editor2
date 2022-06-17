@@ -28,6 +28,7 @@
     import PixelPreview from '../atoms/PixelPreview.svelte';
     import CompareSwitcher from '../atoms/CompareSwitcher.svelte';
     import ComparePanel from '../atoms/ComparePanel.svelte';
+    import FrameIndicator from '../atoms/FrameIndicator.svelte';
     import ChoiceTable from '../modules/ChoiceTable.svelte';
 
     import {
@@ -75,6 +76,9 @@
     let pasteModalOpen = false;
     let pasteOptions = [];
     let pasteMode = null;
+
+    let frame = 0;
+    let totalFrames = 1;
 
     let undoSteps = [];
     let currentUndoStep = -1;
@@ -454,6 +458,8 @@
                     <PickableImage
                         src={previewSrc}
                         scale={12}
+                        bind:frame
+                        bind:totalFrames
                         on:pick={onPickablePick}
                         on:hover={onPickableHover}
                     />
@@ -466,6 +472,7 @@
                         <PickableImage
                             src={data}
                             scale={12}
+                            bind:frame
                             on:pick={onPickablePick}
                             on:hover={onPickableHover}
                         />
@@ -482,6 +489,8 @@
                     <div>
                         <Canvas
                             {texture}
+                            base={8}
+                            bind:frame
                             palette={texturePalette}
                             override={textureOverride}
                             on:change={onTextureChange}
@@ -496,6 +505,7 @@
                         src={epPreviewSrc}
                         base={8}
                         scale={24}
+                        bind:frame
                         on:pick={onPickablePick}
                         on:hover={onPickableHover}
                     />
@@ -591,11 +601,25 @@
                     class:active={index === currentUndoStep}
                     on:click={() => onUndo(index)}
                 >
-                    <PixelPreview size={4} texture={step} colors={undoColors} />
+                    <PixelPreview
+                        size={4}
+                        base={8}
+                        bind:frame
+                        texture={step}
+                        colors={undoColors}
+                    />
                 </button>
             {/each}
         </div>
     </div>
+
+    {#if totalFrames > 1}
+        <div class="grid-frames">
+            <div class="frames-parent">
+                <FrameIndicator bind:frame bind:totalFrames />
+            </div>
+        </div>
+    {/if}
 
     <div class="grid-preview-source">
         <CompareSwitcher>
@@ -751,8 +775,8 @@
 <style lang="scss">
     .editor {
         display: grid;
-        grid-template-areas: 'source editor tools' 'palette undo tools' 'preview-s preview-e tools' 'actions actions actions';
-        grid-template-rows: auto auto 1fr auto;
+        grid-template-areas: 'source editor tools' 'frames frames tools' 'palette undo tools' 'preview-s preview-e tools' 'actions actions actions';
+        grid-template-rows: auto auto auto 1fr auto;
         grid-template-columns: 1fr 1fr auto;
         gap: var(--cds-spacing-02);
 
@@ -777,6 +801,10 @@
     }
     .grid-undo {
         grid-area: undo;
+        overflow: hidden;
+    }
+    .grid-frames {
+        grid-area: frames;
         overflow: hidden;
     }
     .grid-preview-source {
@@ -872,6 +900,12 @@
             box-shadow: 0 0 0 1px var(--cds-ui-background),
                 0 0 0 3px var(--cds-ui-05);
         }
+    }
+
+    .frames-parent {
+        background-color: var(--cds-field-01);
+
+        padding: var(--cds-spacing-03);
     }
 
     .actions {

@@ -4,6 +4,8 @@
 
     export let choice = null;
     export let options = [];
+
+    const base = 8;
 </script>
 
 <table>
@@ -18,13 +20,13 @@
             {#if value}
                 <td class:selected={choice === value}>
                     <Button kind="ghost" on:click={() => (choice = value)}>
-                        <Preview {size} {colors} {texture} />
+                        <Preview {size} {base} {colors} {texture} />
                     </Button>
                 </td>
             {:else}
                 <td>
                     <div class="button-padding">
-                        <Preview {size} {colors} {texture} />
+                        <Preview {size} {base} {colors} {texture} />
                     </div>
                 </td>
             {/if}
