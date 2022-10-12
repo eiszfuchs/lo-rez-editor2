@@ -12,7 +12,7 @@
     import MigrationButton from '@/components/sidebar/MigrationButton.svelte';
 
     const { writeFileSync, mkdirSync, existsSync } = require('fs');
-    const axios = require('axios').default;
+    const axios = require('axios');
 
     let selected = '';
 
